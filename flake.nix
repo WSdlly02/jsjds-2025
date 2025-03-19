@@ -1,5 +1,5 @@
 {
-  description = "WSdlly02's Codes Library";
+  description = "JSJDS 2025 work code repo";
 
   inputs = {
     flake-parts = {
@@ -21,6 +21,13 @@
       nixpkgs,
     }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {
+      flake.homeConfigurations."wsdlly02" = home-manager.lib.homeManagerConfiguration {
+        pkgs = nixpkgs.legacyPackages."aarch64-linux";
+        extraSpecialArgs = { inherit inputs; };
+        modules = [
+          ./Nix/home-manager
+        ];
+      };
       perSystem =
         {
           inputs',
