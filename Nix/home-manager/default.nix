@@ -16,7 +16,6 @@
     username = "wsdlly02";
     homeDirectory = "/home/wsdlly02";
     packages = with pkgs; [
-      aria2
       btop
       fastfetch
       ncdu
@@ -24,7 +23,7 @@
       nix-output-monitor
       nix-tree
       nnn
-      inputs.self.devShells."pkgs.system".default
+      ##inputs.self.devShells."aarch64-linux".default
     ];
     stateVersion = "25.05";
   };

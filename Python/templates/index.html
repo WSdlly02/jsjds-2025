@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>高温报警系统</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin-top: 50px;
+        }
+        #temperature {
+            font-size: 2em;
+            color: #333;
+        }
+        .alarm {
+            color: red;
+            font-weight: bold;
+        }
+    </style>
+</head>
+<body>
+    <h1>高温报警系统</h1>
+    <div id="temperature">当前温度: <span id="tempValue">--</span>°C</div>
+    <audio id="alarmSound" src="alarm.mp3" preload="auto"></audio>
+
+    <script>
+        const tempValue = document.getElementById('tempValue');
+        const alarmSound = document.getElementById('alarmSound');
+        const threshold = 80;  // 设置高温阈值
+
+        function fetchTemperature() {
+            fetch('/get_temperature')
+                .then(response => response.json())
+                .then(data => {
+                    const temperature = data.temperature;
+                    tempValue.textContent = temperature;
+
+                    if (temperature > threshold) {
+                        tempValue.classList.add('alarm');
+                        alarmSound.play();  // 触发警报声
+                    } else {
+                        tempValue.classList.remove('alarm');
+                        alarmSound.pause();  // 停止警报声
+                        alarmSound.currentTime = 0;  // 重置音频
+                    }
+                });
+        }
+
+        setInterval(fetchTemperature, 2000);  // 每2秒获取一次温度数据
+    </script>
+</body>
+</html>
