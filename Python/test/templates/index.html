@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>智能监控系统</title>
+    <style>
+      body {
+        display: flex;
+        flex-wrap: wrap;
+      }
+      .column {
+        flex: 1;
+        padding: 10px;
+        box-sizing: border-box;
+      }
+      .column img {
+        width: 100%;
+        height: auto;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="column">
+      <h2>实时监控画面</h2>
+      < img src="{{ url_for('video_feed') }}">
+    </div>
+    <div class="column">
+      <h2>热成像画面</h2>
+      < img src="{{ url_for('thermal_feed') }}">
+    </div>
+    <div class="column">
+      <h2>数据库</h2>
+      < img src="{{ url_for('database') }}">
+    </div>
+    <div class="column">
+      <h2>系统信息</h2>
+      <p>当前温度: <span id="temperature">25</span>°C</p>
+      <p id="alert" style="color: red"></p>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js"></script>
+    <script>
+      var socket = io();
+
+      socket.on("temperature_alert", function (data) {
+        document.getElementById("temperature").innerText = data.temperature;
+        document.getElementById("alert").innerText =
+          "温度过高！当前温度: " + data.temperature + "°C";
+      });
+    </script>
+  </body>
+</html>

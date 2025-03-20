@@ -62,9 +62,6 @@ tempRecogAlgo xs = map tempRecogAlgo_step2 xs -- 脱一层外壳,长度24
             | zs !! n == zs !! (n - 1) && zs !! n > zs !! (n + 1) = zs !! n -- 220
             | otherwise = zs !! n
 
--- \| n - 1 == 0 && zs !! (n - 1) /= 0 = 3 -- 边界包围
--- \| n + 1 == 31 && zs !! (n + 1) /= 0 = 3 -- 边界包围
-
 filterUselessWarning :: [[Int]] -> [[Int]] -- 过滤危险温度矩阵中不是3的元素
 filterUselessWarning xs = map filterUselessWarning_step2 xs -- 尾递归
   where

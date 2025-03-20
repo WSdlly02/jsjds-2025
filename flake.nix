@@ -49,13 +49,13 @@
 
           legacyPackages = {
             ####################
-            haskellEnv = callPackage ./Nix/pkgs/haskellEnv.nix { };
+            haskellEnv = callPackage ./Nix/pkgs/haskellEnv.nix { }; # IMPORTANT !!!
             kmsxx-src = callPackage ./Nix/pkgs/kmsxx-src.nix { };
             libcamera = callPackage ./Nix/pkgs/libcamera-raspi.nix { inherit inputs; };
             libpisp = callPackage ./Nix/pkgs/libpisp.nix { };
             picamera2 = callPackage ./Nix/pkgs/picamera2.nix { };
             pidng = callPackage ./Nix/pkgs/pidng.nix { };
-            python312Env = callPackage ./Nix/pkgs/python312Env.nix { inherit inputs; };
+            python312Env = callPackage ./Nix/pkgs/python312Env.nix { inherit inputs; }; # IMPORTANT !!!
             python312FHSEnv = callPackage ./Nix/pkgs/python312FHSEnv.nix { inherit inputs; }; # depends on python312Env
             rpi-kms = callPackage ./Nix/pkgs/rpi-kms.nix { inherit inputs; };
             simplejpeg = callPackage ./Nix/pkgs/simplejpeg.nix { };

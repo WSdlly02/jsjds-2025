@@ -1,44 +1,46 @@
-/*
-  Notice:
-
-  python3 = python312; # which is defined in <nixpkgs/pkgs/top-level/all-packages.nix>
-  python3Packages = dontRecurseIntoAttrs python312Packages; # same as above
-  python312Packages = recurseIntoAttrs python312.pkgs; # same as above
-  some packages requires old python-modules will specific {python3 = python311;} in args
-
-  buildEnv = callPackage ./wrapper.nix {
-    python = self;
-    inherit (pythonPackages) requiredPythonModules;
-  };
-  withPackages = import ./with-packages.nix { inherit buildEnv pythonPackages; }; which is defined in <nixpkgs/pkgs/development/interpreters/python/passthrufun.nix>
-  pkgs = pythonPackages; # same as above
-
-  virtualenv = with python3Packages; toPythonApplication virtualenv; # virtualenv = python3Packages.virtualenv
-  "toPythonApplication" converts a Python library to an application, which is defined in <nixpkgs/pkgs/development/interpreters/python/python-packages-base.nix>
-
-  python3.buildEnv.override {
-    extraLibs = [ python3Packages.pyramid ];
-    ignoreCollisions = true;
-  }
-
-  is equals to
-
-  python3.withPackages (python312Packages: with python312Packages; [ # It will pass python312Packages as this func's arg
-    numpy
-    requests
-  ])
-*/
 {
   extraPackages ? [ ],
   extraPostBuild ? "",
   inputs,
   python312,
   python312Packages,
+  system,
 }:
 python312.buildEnv.override {
   extraLibs =
     with python312Packages;
+    with inputs.self.legacyPackages."${system}";
     [
+      # Drivers from self
+      mlx90460-driver.Adafruit-Blinka
+      mlx90460-driver.adafruit-circuitpython-busdevice
+      mlx90460-driver.adafruit-circuitpython-connectionmanager
+      mlx90460-driver.adafruit-circuitpython-mlx90640
+      mlx90460-driver.adafruit-circuitpython-requests
+      mlx90460-driver.adafruit-circuitpython-typing
+      mlx90460-driver.rpi-ws281x
+      picamera2
+      pidng
+      simplejpeg
+      v4l2-python3
+      # Drivers from Nixpkgs
+      adafruit-platformdetect
+      adafruit-pureio
+      av
+      binho-host-adapter
+      piexif
+      pillow
+      pyftdi
+      pyserial
+      python-prctl
+      pyusb
+      rpi-gpio
+      sysv-ipc
+      typing-extensions
+      # Daily runtimes
+      flask
+      flask-socketio
+      opencv4
       numpy
       pandas
       psutil
@@ -50,5 +52,25 @@ python312.buildEnv.override {
       virtualenv
     ]
     ++ extraPackages;
-  postBuild = "" + extraPostBuild;
+  postBuild =
+    let
+      legacyPackages = inputs.self.legacyPackages."${system}";
+    in
+    ''
+      ln -s ${legacyPackages.libcamera}/bin/cam $out/bin/
+      ln -s ${legacyPackages.libcamera}/bin/libcamerify $out/bin/
+      ln -s ${legacyPackages.libcamera}/lib/python3.12/site-packages/libcamera $out/lib/python3.12/site-packages/
+      ln -s ${legacyPackages.libcamera}/lib/gstreamer-1.0 $out/lib/
+      ln -s ${legacyPackages.libcamera}/lib/libcamera $out/lib/
+      ln -s ${legacyPackages.libcamera}/lib/libcamera-base.so $out/lib/
+      ln -s ${legacyPackages.libcamera}/lib/libcamera-base.so.0.3 $out/lib/
+      ln -s ${legacyPackages.libcamera}/lib/libcamera-base.so.0.3.1 $out/lib/
+      ln -s ${legacyPackages.libcamera}/lib/libcamera.so $out/lib/
+      ln -s ${legacyPackages.libcamera}/lib/libcamera.so.0.3 $out/lib/
+      ln -s ${legacyPackages.libcamera}/lib/libcamera.so.0.3.1 $out/lib/
+      ln -s ${legacyPackages.libcamera}/libexec $out/
+      ln -s ${legacyPackages.libcamera}/share/libcamera $out/share/
+      ln -s ${legacyPackages.rpi-kms}/lib/python3.12/site-packages/pykms $out/lib/python3.12/site-packages/
+    ''
+    + extraPostBuild;
 }

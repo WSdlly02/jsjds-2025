@@ -23,7 +23,8 @@
       nix-output-monitor
       nix-tree
       nnn
-      ##inputs.self.devShells."aarch64-linux".default
+      inputs.self.legacyPackages."${system}".haskellEnv
+      inputs.self.legacyPackages."${system}".python312Env
     ];
     stateVersion = "25.05";
   };
