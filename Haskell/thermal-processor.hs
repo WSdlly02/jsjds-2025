@@ -46,19 +46,24 @@ scaleMatrix' :: Int -> [[Int]] -> [[Int]]
 scaleMatrix' factor = concatMap (replicate factor) . map (concatMap (replicate factor))
 
 tempRecogAlgo :: [[Int]] -> [[Int]] -- 危险温度矩阵转换图像识别
-tempRecogAlgo xs = map tempRecogAlgo_step2 xs -- 脱一层外壳
+tempRecogAlgo xs = map tempRecogAlgo_step2 xs -- 脱一层外壳,长度24
   where
-    tempRecogAlgo_step2 ys = map (encircleAlgo ys) [1 .. 30]
+    tempRecogAlgo_step2 ys = map (\n -> encircleAlgo ys n) [0 .. 31] -- 长度32
       where
         encircleAlgo zs n
-            | n - 1 == 0 && zs !! (n - 1) /= 0 = 3 -- 边界包围
-            | n + 1 == 31 && zs !! (n + 1) /= 0 = 3 -- 边界包围
+            | n == 0 && zs !! n /= 0 = 3 -- 边界检查
+            | n == 0 && zs !! n == 0 = zs !! n -- 边界检查
+            | n == 31 && zs !! n /= 0 = 3 -- 边界检查
+            | n == 31 && zs !! n == 0 = zs !! n -- 边界检查
             | zs !! n == zs !! (n - 1) && zs !! n < zs !! (n + 1) = 3 -- 002
             | zs !! n == zs !! (n - 1) && zs !! n == zs !! (n + 1) = zs !! n -- 222/000
             | zs !! n < zs !! (n - 1) && zs !! n == zs !! (n + 1) = 3 -- 200
             | zs !! n > zs !! (n - 1) && zs !! n == zs !! (n + 1) = zs !! n -- 022
             | zs !! n == zs !! (n - 1) && zs !! n > zs !! (n + 1) = zs !! n -- 220
             | otherwise = zs !! n
+
+-- \| n - 1 == 0 && zs !! (n - 1) /= 0 = 3 -- 边界包围
+-- \| n + 1 == 31 && zs !! (n + 1) /= 0 = 3 -- 边界包围
 
 filterUselessWarning :: [[Int]] -> [[Int]] -- 过滤危险温度矩阵中不是3的元素
 filterUselessWarning xs = map filterUselessWarning_step2 xs -- 尾递归
@@ -136,7 +141,8 @@ main = do
                                 | otherwise = go (2 : acc) ys -- 大于等于40度
                 let recogRectangle = tempRecogAlgo warningTempMatrix
                 let filteredRecogRectangle = scaleMatrix' 10 (filterUselessWarning recogRectangle) -- 最终的overlay层
-                let pngData = matrixToPNG (mergeMatrices scaledTempColorMap filteredRecogRectangle)
+                let frame = mergeMatrices scaledTempColorMap filteredRecogRectangle
+                let pngData = matrixToPNG frame
                 putStr "--FRAME--\n"
                 BL.putStr pngData -- 输出帧数据
                 hFlush stdout
