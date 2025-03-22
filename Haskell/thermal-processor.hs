@@ -27,8 +27,8 @@ normalize xs = map normalize_step2 xs
         | x <= 40 = (x - 10) / 30 -- 主要监控10-40度
         | otherwise = 1
 
-jetColor :: Float -> (Int, Int, Int) -- 温度数据映射至RGB
-jetColor x = (round (clamp r * 255), round (clamp g * 255), round (clamp b * 255))
+toJetColor :: Float -> (Int, Int, Int) -- 温度数据映射至RGB
+toJetColor x = (round (clamp r * 255), round (clamp g * 255), round (clamp b * 255))
   where
     -- 分段计算RGB分量
     (r, g, b)
@@ -118,19 +118,25 @@ main = do
                 let tempNormalization = normalize temps -- 将温度数据归一至0-1
                 let tempNormalizationMatrix = arrayToMatrix_32 tempNormalization -- 将768个归一化的温度数据存进32*24的二维矩阵
                 let tempColorMap = refillMatrixWithColor tempNormalizationMatrix where -- 将归一化的矩阵数据转为RGB矩阵
+                    refillMatrixWithColor :: [[Float]] -> [[(Int, Int, Int)]]
                     refillMatrixWithColor xs = map refillArrayWithColor xs
                       where
+                        refillArrayWithColor :: [Float] -> [(Int, Int, Int)]
                         refillArrayWithColor = reverse . go []
                           where
+                            go :: [(Int, Int, Int)] -> [Float] -> [(Int, Int, Int)]
                             go acc [] = acc
-                            go acc (y : ys) = go (jetColor y : acc) ys
+                            go acc (y : ys) = go (toJetColor y : acc) ys
                 let scaledTempColorMap = scaleMatrix 10 tempColorMap -- 76800个rgb矩阵
                 -- 基本图像处理完成
                 let warningTempMatrix = refillMatrixWithTemp tempNormalizationMatrix where -- 过滤32*24矩阵，记录危险温度
+                    refillMatrixWithTemp :: [[Float]] -> [[Int]]
                     refillMatrixWithTemp xs = map refillArrayWithTemp xs -- 脱一层外壳
                       where
+                        refillArrayWithTemp :: [Float] -> [Int]
                         refillArrayWithTemp = reverse . go []
                           where
+                            go :: [Int] -> [Float] -> [Int]
                             go acc [] = acc
                             go acc (y : ys)
                                 | y < 2 / 3 = go (0 : acc) ys -- 小于30度
