@@ -12,7 +12,10 @@ mkShell {
       extraPackages = with haskellPackages; [ ];
     })
     (inputs.self.legacyPackages."${system}".python312Env.override {
-      extraPackages = with python312Packages; with inputs.self.legacyPackages."${system}"; [ ];
+      extraPackages =
+        with python312Packages;
+        with inputs.self.legacyPackages."${system}";
+        [ ultralytics ];
     })
   ];
   shellHook = ''

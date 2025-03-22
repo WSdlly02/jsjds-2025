@@ -22,6 +22,7 @@ arrayToMatrix_32 (xs) = take 32 (xs) : arrayToMatrix_32 (drop 32 xs)
 normalize :: [Float] -> [Float] -- 温度数据归一函数
 normalize xs = map normalize_step2 xs
   where
+    normalize_step2 :: Float -> Float
     normalize_step2 x
         | x <= 10 = 0
         | x <= 40 = (x - 10) / 30 -- 主要监控10-40度
@@ -65,8 +66,10 @@ tempRecogAlgo xs = map tempRecogAlgo_step2 xs -- 脱一层外壳,长度24
 filterUselessWarning :: [[Int]] -> [[Int]] -- 过滤危险温度矩阵中不是3的元素
 filterUselessWarning xs = map filterUselessWarning_step2 xs -- 尾递归
   where
+    filterUselessWarning_step2 :: [Int] -> [Int]
     filterUselessWarning_step2 = reverse . go []
       where
+        go :: [Int] -> [Int] -> [Int]
         go acc [] = acc
         go acc (y : ys)
             | y == 3 = go (3 : acc) ys
