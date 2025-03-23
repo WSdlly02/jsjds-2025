@@ -22,12 +22,15 @@
     }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {
       flake.homeConfigurations."wsdlly02" = home-manager.lib.homeManagerConfiguration {
-        pkgs = nixpkgs.legacyPackages."aarch64-linux";
         extraSpecialArgs = { inherit inputs; };
         modules = [
           ./Nix/home-manager
         ];
+        pkgs = import nixpkgs {
+          system = "aarch64-linux";
+        };
       };
+      flake.overlays = { };
       perSystem =
         {
           system,
