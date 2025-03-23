@@ -2,12 +2,20 @@
   haskellPackages,
   inputs,
   mkShell,
+  pkgs,
   python312Packages,
   system,
 }:
 
 mkShell {
-  packages = [
+  packages = with pkgs; [
+    (labelImg.overrideAttrs (
+      finalAttrs: previousAttrs: {
+        propagatedBuildInputs =
+          with python312Packages;
+          [ distutils ] ++ previousAttrs.propagatedBuildInputs;
+      }
+    ))
     (inputs.self.legacyPackages."${system}".haskellEnv.override {
       extraPackages = with haskellPackages; [ ];
     })

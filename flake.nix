@@ -30,11 +30,13 @@
       };
       perSystem =
         {
-          inputs',
+          system,
           ...
         }:
         let
-          pkgs = inputs'.nixpkgs.legacyPackages; # can be defined in arguments
+          pkgs = import nixpkgs {
+            inherit system;
+          };
           inherit (pkgs)
             callPackage
             mkShell
