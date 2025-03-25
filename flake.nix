@@ -30,7 +30,13 @@
           system = "aarch64-linux";
         };
       };
-      flake.overlays = { };
+      flake.overlays = {
+        pytorch-overlay = final: prev: {
+          python312 = prev.python312.override {
+            packageOverrides = pyfinal: pyprev: { torch = pyprev.torch.override { vulkanSupport = true; }; };
+          };
+        };
+      };
       perSystem =
         {
           system,
@@ -39,6 +45,10 @@
         let
           pkgs = import nixpkgs {
             inherit system;
+            config = {
+              allowUnfree = true;
+            };
+            overlays = [ self.overlays.pytorch-overlay ];
           };
           inherit (pkgs)
             callPackage

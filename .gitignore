@@ -6,6 +6,8 @@
 
 *.o
 *.hi
-.vscode
-result
-target
+.vscode/
+result/
+target/
+/Python/yolo/JSJDS2025-yolov11/*
+!/Python/yolo/JSJDS2025-yolov11/*.py

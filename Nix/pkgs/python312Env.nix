@@ -43,14 +43,8 @@ python312.withPackages (
     flask-socketio
     opencv4
     numpy
-    pandas
     psutil
-    requests
-    scikit-learn
-    scipy
-    scrapy
-    sympy
-    virtualenv
+    ultralytics # YOLO
   ]
   ++ extraPackages
 )
