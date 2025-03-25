@@ -1,20 +1,19 @@
 {
   buildFHSEnv,
-  cmake,
+  dbus,
+  fish,
   gcc,
   glib,
   glibc,
-  dbus,
-  fish,
+  inputs,
   libdrm,
   libglvnd,
-  inputs,
-  udev,
+  rocmPackages,
   stdenv,
   system,
+  udev,
   zlib,
   zstd,
-  rocmPackages,
 }:
 let
   usedRocmPackages =
@@ -23,33 +22,33 @@ let
     else
       with rocmPackages;
       [
-        rocm-core
         clr
-        rccl
+        clr.icd
+        hipblas
+        hipcub
+        hipfft
+        hipify
+        hipsolver
+        hipsparse
+        llvm.openmp
         miopen
         #miopengemm
-        rocrand
+        rccl
         rocblas
-        rocsparse
-        hipsparse
-        rocthrust
-        rocprim
-        hipcub
-        roctracer
         rocfft
-        rocsolver
-        hipfft
-        hipsolver
-        hipblas
-        rocminfo
-        rocm-smi
-        rocm-thunk
         rocm-comgr
+        rocm-core
         rocm-device-libs
         rocm-runtime
-        clr.icd
-        hipify
-        llvm.openmp
+        rocm-smi
+        rocm-thunk
+        rocminfo
+        rocprim
+        rocrand
+        rocsolver
+        rocsparse
+        rocthrust
+        roctracer
       ];
 in
 buildFHSEnv {
@@ -59,17 +58,16 @@ buildFHSEnv {
     with pkgs;
     [
       # Common pkgs
-      cmake
+      dbus
+      fish
       gcc
       glib.out
       glibc
-      dbus
-      fish
+      inputs.self.legacyPackages."${system}".python312Env
       libdrm
       libglvnd
-      inputs.self.legacyPackages."${system}".python312Env
-      udev
       stdenv.cc.cc.lib
+      udev
       zlib
       zstd
     ]
