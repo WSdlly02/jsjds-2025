@@ -32,9 +32,9 @@
       };
       flake.overlays = {
         pytorch-overlay = final: prev: {
-          python312 = prev.python312.override {
-            packageOverrides = pyfinal: pyprev: { torch = pyprev.torch.override { vulkanSupport = true; }; };
-          };
+          # python312 = prev.python312.override {
+          #   packageOverrides = pyfinal: pyprev: { torch = pyprev.torch.override { vulkanSupport = true; }; };
+          # };
         };
       };
       perSystem =
@@ -67,6 +67,7 @@
 
           legacyPackages = {
             # system pkgs
+            self-code = callPackage ./Nix/pkgs/self-code.nix { };
             haskellEnv = callPackage ./Nix/pkgs/haskellEnv.nix { }; # IMPORTANT !!!
             python312Env = callPackage ./Nix/pkgs/python312Env.nix { inherit inputs; }; # IMPORTANT !!!
             python312FHSEnv = callPackage ./Nix/pkgs/python312FHSEnv.nix { inherit inputs; }; # depends on python312Env

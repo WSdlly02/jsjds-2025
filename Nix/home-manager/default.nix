@@ -6,7 +6,9 @@
 {
   imports = [
     ./fish-config.nix
-    ##./python-web-server.nix
+    ./services/thermal-data-reader.nix
+    ./services/web-central-compositor.nix
+    ./services/thermal-data-processor.nix
   ];
   programs = {
     home-manager.enable = true;

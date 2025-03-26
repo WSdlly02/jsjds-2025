@@ -10,7 +10,7 @@ stdenvNoCC.mkDerivation rec {
 
   src = fetchgit {
     url = "https://github.com/tomba/kmsxx.git";
-    hash = "sha256-CDGCAq93+h1MjLB0yrdPHoObXl2KjFqKzZOwueZNWsc=";
+    hash = "sha256-KNfWQAxz3ZLoxIe3v1fqaQBJdec0BXwipATfofWIzlQ=";
     deepClone = true;
     leaveDotGit = true;
   };
