@@ -11,8 +11,8 @@ stdenvNoCC.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "WSdlly02";
     repo = "jsjds-2025";
-    rev = "3178cdc26ae235e50ebfddbe3836ffbf0bbf7c80";
-    hash = "sha256-Egk0D6Un5tpGvikLg8/58sLV2K8ey4i9XlirJn8mYk4=";
+    rev = "ec050d785fb060f4a0808de44b04fe64968f3b0e";
+    hash = "sha256-ilULfEtDPgqIiDx8x2lx/01Z1KDPrEhuN4PZZDMnAZU=";
   };
 
   strictDeps = true;

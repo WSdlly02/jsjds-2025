@@ -1,5 +1,6 @@
 {
   inputs,
+  pkgs,
   ...
 }:
 {
@@ -10,11 +11,11 @@
       Requires = [ "thermal-data-reader.service" ];
     };
     Service = with inputs.self.legacyPackages."aarch64-linux"; {
-      ExecStartPre = "mkfifo /tmp/thermal-data-processor.stdout";
-      ExecStart = "${selfSrc}/Haskell/thermal-data-processor";
-      ExecStartPost = "rm -f /tmp/thermal-data-processor.stdout";
-      StandardInput = "file:/tmp/thermal-data-reader.stdout";
-      StandardOutput = "file:/tmp/thermal-data-processor.stdout";
+      #ExecStartPre = "${pkgs.coreutils}/bin/mkfifo %%t/thermal-data-processor.stdout";
+      ExecStart = "/home/wsdlly02/Documents/jsjds-2025/Haskell/thermal-data-processor"; # !!! JUST SUBSITUTE
+      ExecStopPost = "rm -f %%t/thermal-data-processor.stdout";
+      StandardInput = "file:%%t/thermal-data-reader.stdout";
+      StandardOutput = "file:%%t/thermal-data-processor.stdout";
     };
     Install = {
       WantedBy = [ "default.target" ];

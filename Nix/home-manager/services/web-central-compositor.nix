@@ -10,10 +10,10 @@
       Requires = [ "thermal-data-processor.service" ];
     };
     Service = with inputs.self.legacyPackages."aarch64-linux"; {
-      # ExecStartPre = "mkfifo /tmp/thermal-data-processor.stdout";
+      # ExecStartPre = "${pkgs.coreutils}/bin/mkfifo %%t/thermal-data-processor.stdout";
       ExecStart = "${python312Env}/bin/python3.12 ${selfSrc}/Python/web-central-compositor.py";
-      # ExecStartPost = "rm -f /tmp/thermal-data-processor.stdout";
-      StandardInput = "file:/tmp/thermal-data-processor.stdout";
+      # ExecStopPost = "rm -f %%t/thermal-data-processor.stdout";
+      StandardInput = "file:%%t/thermal-data-processor.stdout";
     };
     Install = {
       WantedBy = [ "default.target" ];

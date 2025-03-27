@@ -6,10 +6,11 @@
 {
   imports = [
     ./fish-config.nix
+    ./services/central-compositor.nix
     ./services/ensure-database-existence.nix
-    ./services/thermal-data-processor.nix
-    ./services/thermal-data-reader.nix
-    ./services/web-central-compositor.nix
+    #./services/thermal-data-processor.nix
+    #./services/thermal-data-reader.nix
+    #./services/web-central-compositor.nix
   ];
   programs = {
     home-manager.enable = true;

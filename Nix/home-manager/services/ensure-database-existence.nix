@@ -8,6 +8,7 @@
     Unit.Description = "Checking beingness of the databases";
     Service = with inputs.self.legacyPackages."aarch64-linux"; {
       Type = "oneshot";
+      RemainAfterExit = "yes";
       ExecStart = "${pkgs.writeShellScript "ensure-database-existence.sh" ''
         file_path="/home/wsdlly02/Documents/jsjds-2025/thermal-sensor-data.db"
         src_path="${selfSrc}/thermal-sensor-data.db"

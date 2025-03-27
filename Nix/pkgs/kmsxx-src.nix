@@ -6,13 +6,13 @@
 
 stdenvNoCC.mkDerivation rec {
   pname = "kmsxx-src";
-  version = "2024-12-09";
+  version = "2025-2-12";
 
   src = fetchgit {
     url = "https://github.com/tomba/kmsxx.git";
-    hash = "sha256-KNfWQAxz3ZLoxIe3v1fqaQBJdec0BXwipATfofWIzlQ=";
+    rev = "8b1c053359ed7593e43222daccb8c0db8fcc441f";
+    hash = "sha256-Q1BsFEoVyiafD6z2PfrTa8/fJGhhAnlFKYhbRY5gm/U=";
     deepClone = true;
-    leaveDotGit = true;
   };
   installPhase = ''
     mkdir $out
