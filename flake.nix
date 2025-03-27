@@ -67,7 +67,7 @@
 
           legacyPackages = {
             # system pkgs
-            self-code = callPackage ./Nix/pkgs/self-code.nix { };
+            selfSrc = callPackage ./Nix/pkgs/selfSrc.nix { };
             haskellEnv = callPackage ./Nix/pkgs/haskellEnv.nix { }; # IMPORTANT !!!
             python312Env = callPackage ./Nix/pkgs/python312Env.nix { inherit inputs; }; # IMPORTANT !!!
             python312FHSEnv = callPackage ./Nix/pkgs/python312FHSEnv.nix { inherit inputs; }; # depends on python312Env

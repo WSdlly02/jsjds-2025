@@ -6,9 +6,9 @@
 
 *.o
 *.hi
-*.db
 .vscode/
 result/
 target/
-/Python/yolo/JSJDS2025-yolov11/*
-!/Python/yolo/JSJDS2025-yolov11/*.py
+/Python/yolo/*
+!/Python/yolo/*.py
+!/Python/yolo/*.pt

@@ -115,9 +115,7 @@ main = do
         case runGetOrFail parseThermalData (BL.fromStrict bytes) of
             Left (_, _, err) ->
                 putStrLn $ "解析错误: " ++ err
-            Right (_, _, (ts, temps)) -> do
-                let maxTemp = maximum temps -- 最大温度
-                let minTemp = minimum temps
+            Right (_, _, (_, temps)) -> do
                 let tempNormalization = normalize temps -- 将温度数据归一至0-1
                 let tempNormalizationMatrix = arrayToMatrix_32 tempNormalization -- 将768个归一化的温度数据存进32*24的二维矩阵
                 let tempColorMap = refillMatrixWithColor tempNormalizationMatrix where -- 将归一化的矩阵数据转为RGB矩阵
