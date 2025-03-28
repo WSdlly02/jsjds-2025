@@ -13,7 +13,7 @@ mlx = adafruit_mlx90640.MLX90640(i2c)
 mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_16_HZ  # 16Hz 刷新率
 temps = [0.0] * 768
 
-conn = sqlite3.connect("/home/wsdlly02/Documents/jsjds-2025/thermal-sensor-data.db")
+conn = sqlite3.connect("~/Documents/databases/thermal-sensor-data.db")
 cursor = conn.cursor()
 
 
@@ -51,7 +51,6 @@ try:
             temp_min = numpy.min(temps)
             temp_avg = numpy.mean(temps)
             insert_data(timestamp, temp_avg, temp_min, temp_max)
-            counter = 0
         time.sleep(1 / 16)
 except KeyboardInterrupt:
     print("程序终止")

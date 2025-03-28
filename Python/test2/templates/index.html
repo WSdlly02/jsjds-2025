@@ -1,0 +1,287 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>智能监控系统</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='css/style.css') }}">
+    <style>
+        
+    </style>
+</head>
+<body>
+    <header>
+        <h1>智能监控系统</h1>
+        <nav>
+            <ul>
+                <li><a href=" 'index') }}">首页</a ></li>
+                <li><a href="{{ url_for('live_monitor') }}">实时监控</a ></li>
+                <li><a href="{{ url_for('thermal') }}">热成像监测</a ></li>
+                <li><a href="{{ url_for('database') }}">数据库</a ></li>
+                <li><a href="{{ url_for('system_info') }}">信息系统</a ></li>
+                <li><a href="{{ url_for('gallery') }}">照片墙</a ></li>
+            </ul>
+        </nav>
+    </header>
+    <main>
+        {% block content %}{% endblock %}
+    </main>
+    <footer>
+        <p>&copy; 2023 智能监控系统 - 版权所有</p >
+    </footer>
+    <script src="{{ url_for('static', filename='js/main.js') }}"></script>
+    {% block scripts %}{% endblock %}
+</body>
+</html>
+
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="dashboard">
+    <h2>欢迎使用智能监控系统</h2>
+    <div class="options">
+        <a href="{{ url_for('live_monitor') }}" class="option-card">
+            <h3>实时监控</h3>
+            <p>查看实时监控画面并进行操作</p >
+        </a >
+        <a href="{{ url_for('thermal') }}" class="option-card">
+            <h3>热成像监测</h3>
+            <p>监测温度分布和异常情况</p >
+        </a >
+        <a href="{{ url_for('database') }}" class="option-card">
+            <h3>数据库</h3>
+            <p>查看历史温度记录</p >
+        </a >
+        <a href="{{ url_for('system_info') }}" class="option-card">
+            <h3>信息系统</h3>
+            <p>查看系统信息和状态</p >
+        </a >
+        <a href="{{ url_for('gallery') }}" class="option-card">
+            <h3>照片墙</h3>
+            <p>查看和管理截屏照片</p >
+        </a >
+    </div>
+</div>
+{% endblock %}
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="monitor-container">
+    <h2>实时监控</h2>
+    <div class="video-controls">
+        <button id="zoom-in">放大</button>
+        <button id="zoom-out">缩小</button>
+        <button id="capture">截屏</button>
+    </div>
+    <div class="video-container">
+        <!-- 这里使用模拟视频流，实际应用中替换为真实视频流 -->
+        < img id="live-video" src="https://via.placeholder.com/800x600?text=实时监控画面" alt="实时监控">
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const video = document.getElementById('live-video');
+    const zoomInBtn = document.getElementById('zoom-in');
+    const zoomOutBtn = document.getElementById('zoom-out');
+    const captureBtn = document.getElementById('capture');
+    
+    let scale = 1;
+    
+    // 放大功能
+    zoomInBtn.addEventListener('click', function() {
+        scale += 0.1;
+        video.style.transform = `scale(${scale})`;
+    });
+    
+    // 缩小功能
+    zoomOutBtn.addEventListener('click', function() {
+        if (scale > 0.2) {
+            scale -= 0.1;
+            video.style.transform = `scale(${scale})`;
+        }
+    });
+    
+    // 截屏功能
+    captureBtn.addEventListener('click', function() {
+        // 创建一个canvas元素
+        const canvas = document.createElement('canvas');
+        canvas.width = video.videoWidth || video.naturalWidth;
+        canvas.height = video.videoHeight || video.naturalHeight;
+        const ctx = canvas.getContext('2d');
+        
+        // 绘制当前帧到canvas
+        ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+        
+        // 转换为Blob对象并发送到服务器
+        canvas.toBlob(function(blob) {
+            const formData = new FormData();
+            formData.append('screenshot', blob, 'screenshot.png');
+            
+            fetch('/save_screenshot', {
+                method: 'POST',
+                body: formData
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === 'success') {
+                    alert('截屏已保存!');
+                } else {
+                    alert('截屏保存失败!');
+                }
+            });
+        }, 'image/png');
+    });
+});
+</script>
+{% endblock %}
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="thermal-container">
+    <h2>热成像监测</h2>
+    <div class="thermal-display">
+        <!-- 模拟热成像视频 -->
+        < img id="thermal-video" src="https://via.placeholder.com/800x600/000000/ffffff?text=热成像画面" alt="热成像监测">
+        <div class="temperature-display">
+            <span id="current-temp">--.-</span>°C
+        </div>
+    </div>
+    <div class="alarm-status">
+        <p>警报状态: <span id="alarm-state">正常</span></p >
+        <audio id="alarm-sound" src="{{ url_for('static', filename='alarms/alarm.mp3') }}" preload="auto"></audio>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const tempDisplay = document.getElementById('current-temp');
+    const alarmState = document.getElementById('alarm-state');
+    const alarmSound = document.getElementById('alarm-sound');
+    let alarmActive = false;
+    
+    // 模拟获取温度数据
+    function updateTemperature() {
+        fetch('/get_temperature')
+            .then(response => response.json())
+            .then(data => {
+                const temp = data.temperature;
+                tempDisplay.textContent = temp;
+                
+                // 检查温度是否超过阈值
+                if (temp > 60) {
+                    if (!alarmActive) {
+                        alarmState.textContent = '警报!';
+                        alarmState.style.color = 'red';
+                        alarmSound.play();
+                        alarmActive = true;
+                    }
+                } else {
+                    if (alarmActive) {
+                        alarmState.textContent = '正常';
+                        alarmState.style.color = 'green';
+                        alarmSound.pause();
+                        alarmSound.currentTime = 0;
+                        alarmActive = false;
+                    }
+                }
+            });
+    }
+    
+    // 每2秒更新一次温度
+    updateTemperature();
+    setInterval(updateTemperature, 2000);
+});
+</script>
+{% endblock %}
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="database-container">
+    <h2>温度数据库</h2>
+    <div class="data-controls">
+        <button id="refresh-data">刷新数据</button>
+    </div>
+    <table class="temperature-table">
+        <thead>
+            <tr>
+                <th>时间戳</th>
+                <th>温度 (°C)</th>
+                <th>位置</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for record in data %}
+            <tr>
+                <td>{{ record[1] }}</td>
+                <td>{{ record[2] }}</td>
+                <td>{{ record[3] }}</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const refreshBtn = document.getElementById('refresh-data');
+    
+    refreshBtn.addEventListener('click', function() {
+        location.reload();
+    });
+});
+</script>
+{% endblock %}
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="system-info-container">
+    <h2>系统信息</h2>
+    <div class="info-card">
+        <h3>{{ system.system_name }}</h3>
+        <ul>
+            <li><strong>版本:</strong> {{ system.version }}</li>
+            <li><strong>最后更新:</strong> {{ system.last_update }}</li>
+            <li><strong>开发团队:</strong> {{ system.developer }}</li>
+        </ul>
+    </div>
+    <div class="features-card">
+        <h3>系统功能</h3>
+        <ul>
+            {% for feature in system.features %}
+            <li>{{ feature }}</li>
+            {% endfor %}
+        </ul>
+    </div>
+</div>
+{% endblock %}
+
+{% extends "base.html" %}
+
+{% block content %}
+<div class="gallery-container">
+    <h2>照片墙</h2>
+    <div class="photo-grid">
+        {% for screenshot in screenshots %}
+        <div class="photo-item">
+            <a href="{{ url_for('get_image', filename=screenshot[1]) }}" target="_blank">
+                < img src="{{ url_for('get_image', filename=screenshot[1]) }}" alt="截屏 {{ screenshot[0] }}">
+            </a >
+            <p>{{ screenshot[2] }}</p >
+            <a href="{{ url_for('get_image', filename=screenshot[1]) }}" download>下载</a >
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endblock %}
