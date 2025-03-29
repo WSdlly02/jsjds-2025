@@ -7,10 +7,7 @@
   imports = [
     ./fish-config.nix
     ./services/central-compositor.nix
-    ./services/ensure-database-existence.nix
-    #./services/thermal-data-processor.nix
-    #./services/thermal-data-reader.nix
-    #./services/web-central-compositor.nix
+    ./services/ensure-runtimes-existence.nix
   ];
   programs = {
     home-manager.enable = true;
@@ -26,7 +23,7 @@
       nixfmt-rfc-style
       nix-output-monitor
       nix-tree
-      nnn
+      yazi
       inputs.self.legacyPackages."${system}".haskellEnv
       inputs.self.legacyPackages."${system}".python312Env
     ];
