@@ -1,4 +1,5 @@
 # thermal_sensor_binary.py
+import os
 import time
 import struct
 import sys
@@ -13,7 +14,9 @@ mlx = adafruit_mlx90640.MLX90640(i2c)
 mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_16_HZ  # 16Hz 刷新率
 temps = [0.0] * 768
 
-conn = sqlite3.connect("~/Documents/databases/thermal-sensor-data.db")
+conn = sqlite3.connect(
+    os.path.expanduser("~/Documents/databases/thermal-sensor-data.db")
+)
 cursor = conn.cursor()
 
 
