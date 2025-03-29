@@ -42,7 +42,7 @@
         sync_files() {
             for pair in "$\{file_pairs[@]}"; do
                 IFS=':' read -r src dest <<< "$pair"
-                
+
                 # 检查模板文件是否存在
                 if [ ! -f "$src" ]; then
                     echo "错误：模板文件不存在 $src" >&2

@@ -28,6 +28,10 @@
         ];
         pkgs = import nixpkgs {
           system = "aarch64-linux";
+          config = {
+            allowUnfree = true;
+          };
+          overlays = [ self.overlays.pytorch-overlay ];
         };
       };
       flake.overlays = {

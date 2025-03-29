@@ -6,13 +6,13 @@
 
 stdenvNoCC.mkDerivation rec {
   pname = "selfSrc";
-  version = "0.0.1";
+  version = "1.0.0";
 
   src = fetchFromGitHub {
     owner = "WSdlly02";
     repo = "jsjds-2025";
-    rev = "a0da060e879c54f2a9b55ae020b46101f26a4f76";
-    hash = "sha256-ilULfEtDPgqIiDx8x2lx/01Z1KDPrEhuN4PZZDMnAZU=";
+    rev = "34d532fad111ec1f3edacf6714d615946132afca";
+    hash = "sha256-8yVlb7fpm9iNXs6ZiKVa+u9mbtJMvNXEstPKOxrRNFs=";
   };
 
   strictDeps = true;
