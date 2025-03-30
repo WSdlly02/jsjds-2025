@@ -11,10 +11,9 @@ stdenvNoCC.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "WSdlly02";
     repo = "jsjds-2025";
-    rev = "34d532fad111ec1f3edacf6714d615946132afca";
-    hash = "sha256-8yVlb7fpm9iNXs6ZiKVa+u9mbtJMvNXEstPKOxrRNFs=";
+    rev = "2756f56176f40b1827db7b3e6c5064faea94313e";
+    hash = "sha256-AZlp4bd4Lf3SkUsmhtMu3WLaz7Bosgpzg++MWs0l11o=";
   };
-
   strictDeps = true;
 
   installPhase = ''
@@ -23,5 +22,10 @@ stdenvNoCC.mkDerivation rec {
     cp -r $src/Python $out
     cp $src/photos-timestamp-data.db $out
     cp $src/thermal-sensor-data.db $out
+    runHook postInstall
+  '';
+  postInstall = ''
+    substituteInPlace $out/Python/inference.py \
+    --replace "os.path.abspath(\"./Python/models/best-train1.pt\")" "\"$out/Python/models/best-train1.pt\"" 
   '';
 }

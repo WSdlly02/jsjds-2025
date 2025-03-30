@@ -19,7 +19,6 @@ import screenshotAnalyzer
 import os
 from datetime import datetime
 import sqlite3
-import simpleaudio as sa
 
 app = Flask(__name__)
 
@@ -29,8 +28,7 @@ thermal_lock = threading.Lock()
 latest_frame = None
 sys_info = {"cpu": "0%", "memory": "0%", "temp": "N/A", "fps": "0"}
 alarm_playing = False
-alarm_sound = None
-
+latest_temp_data = 0
 # Initialize camera
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
@@ -46,8 +44,8 @@ picam2.start()
 # 修改照片存储路径
 CAPTURED_PATH = os.path.expanduser("~/Pictures/captured")
 ANALYZED_PATH = os.path.expanduser("~/Pictures/analyzed")
-os.makedirs(CAPTURED_PATH, exist_ok=True)
-os.makedirs(ANALYZED_PATH, exist_ok=True)
+# os.makedirs(CAPTURED_PATH, exist_ok=True) 已在ensure-runtimes-existence中定义
+# os.makedirs(ANALYZED_PATH, exist_ok=True)
 
 
 def generate_thermal():
@@ -77,10 +75,11 @@ def generate_thermal():
                     img_io.seek(0)
 
                     # Check temperature for alarm
-                    temp_data = np.array(img)
-                    max_temp = np.max(temp_data)
-                    if max_temp > 60 and not alarm_playing:
-                        play_alarm()
+                    # temp_data = np.array(img)
+                    # max_temp = np.max(temp_data)
+                    # if max_temp > 60:
+                    #     global alarm_playing
+                    # alarm_playing = True
 
                     yield (
                         b"--frame\r\n"
@@ -92,19 +91,8 @@ def generate_thermal():
                     print(f"Decoding error: {e}")
 
 
-def play_alarm():
-    global alarm_playing, alarm_sound
-    alarm_playing = True
-    wave_obj = sa.WaveObject.from_wave_file("alarm.wav")  # Make sure you have this file
-    alarm_sound = wave_obj.play()
-    alarm_sound.wait_done()
-    alarm_playing = False
-
-
 def stop_alarm():
-    global alarm_playing, alarm_sound
-    if alarm_sound and alarm_playing:
-        alarm_sound.stop()
+    global alarm_playing
     alarm_playing = False
 
 
@@ -174,9 +162,14 @@ def get_temperature_history(limit=100):
         "SELECT timestamp, avg_temp, min_temp, max_temp FROM 'thermal-sensor-data' ORDER BY timestamp DESC LIMIT ?",
         (limit,),
     )
-    data = cursor.fetchall()
+    temp_data = cursor.fetchall()
+    global latest_temp_data
+    latest_temp_data = round(temp_data[0][1], 2)
     conn.close()
-    return data
+    if latest_temp_data > 30:
+        global alarm_playing
+        alarm_playing = True
+    return temp_data
 
 
 def get_captured_photos():
@@ -199,7 +192,7 @@ def index():
         """
     <!DOCTYPE html>
     <html>
-    <head>
+    <head> <audio id="alarm-audio" src="/static/alarm.wav"></audio>
         <title>智能监控系统</title>
         <style>
             body {
@@ -416,7 +409,7 @@ def index():
             
             // Video controls
             let currentZoom = 100;
-            function zoomIn() {
+            function zoomIn() {45.2
                 currentZoom += 25;
                 document.getElementById('monitor-video').style.width = currentZoom + '%';
             }
@@ -448,17 +441,23 @@ def index():
                     .then(response => response.json())
                     .then(data => {
                         document.getElementById('max-temp').innerHTML = '当前最高温度: ' + data.max_temp + '°C';
-                        if (data.alarm) {
-                            document.getElementById('alarm-indicator').classList.remove('hidden');
-                        } else {
-                            document.getElementById('alarm-indicator').classList.add('hidden');
-                        }
+                       if (data.alarm) {
+    document.getElementById('alarm-indicator').classList.remove('hidden');
+    document.getElementById('alarm-audio').play();
+} else {
+    document.getElementById('alarm-indicator').classList.add('hidden');
+    document.getElementById('alarm-audio').pause();
+    document.getElementById('alarm-audio').currentTime = 0;
+}
                     });
             }
             
             function stopAlarm() {
-                fetch('/stop_alarm');
-            }
+    fetch('/stop_alarm');
+    document.getElementById('alarm-audio').pause();
+    document.getElementById('alarm-audio').currentTime = 0;
+    document.getElementById('alarm-indicator').classList.add('hidden');
+}
             
             // Load temperature data
             function loadTemperatureData() {
@@ -527,10 +526,18 @@ def index():
             showSection('monitor');
             setInterval(updateSystemInfo, 1000);
             setInterval(checkTemperature, 1000);
+            setInterval(loadTemperatureData, 1000);  // 每1秒刷新
         </script>
     </body>
     </html>
     """
+    )
+
+
+@app.route("/static/<filename>")
+def serve_static(filename):
+    return send_from_directory(
+        os.path.join(os.path.dirname(__file__), "static"), filename
     )
 
 
@@ -572,8 +579,9 @@ def capture_screenshot():
 
 @app.route("/check_temperature")
 def check_temperature():
+    global latest_temp_data
     # This is a simplified version - in a real app you'd get actual temperature data
-    return jsonify({"max_temp": 45.2, "alarm": alarm_playing})
+    return jsonify({"max_temp": latest_temp_data, "alarm": alarm_playing})
 
 
 @app.route("/stop_alarm")

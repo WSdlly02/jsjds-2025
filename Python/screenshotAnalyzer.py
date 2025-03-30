@@ -1,8 +1,7 @@
-# 应当从属于web-central-compositor.py，被它调用
+# 应当从属于central-compositor.py，被它调用
 import os
 import sqlite3
 import inference
-from datetime import datetime
 
 conn = sqlite3.connect(
     os.path.expanduser("~/Documents/databases/photos-timestamp-data.db"),
