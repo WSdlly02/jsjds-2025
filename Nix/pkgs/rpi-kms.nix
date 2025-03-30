@@ -4,7 +4,6 @@
   git,
   inputs,
   kmsxx,
-  lib,
   libdrm,
   meson,
   ninja,
@@ -53,12 +52,4 @@ stdenv.mkDerivation rec {
     pkg-config
     python312Packages.pybind11
   ];
-
-  meta = with lib; {
-    homepage = "https://sourceforge.net/p/raspberry-gpio-python";
-    description = "Python module to control the GPIO on a Raspberry Pi";
-    license = licenses.mit;
-    platforms = platforms.linux;
-    maintainers = with maintainers; [ onny ];
-  };
 }

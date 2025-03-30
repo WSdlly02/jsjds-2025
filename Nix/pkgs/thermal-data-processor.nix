@@ -5,7 +5,7 @@
 }:
 stdenv.mkDerivation {
   pname = "thermal-data-processor";
-  version = "0.0.1";
+  version = "1.0.0";
   src = inputs.self.legacyPackages."${system}".selfSrc;
   nativeBuildInputs = [ inputs.self.legacyPackages."${system}".haskellEnv ];
   buildPhase = ''
