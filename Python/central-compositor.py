@@ -27,7 +27,8 @@ frame_lock = threading.Lock()
 thermal_lock = threading.Lock()
 latest_frame = None
 sys_info = {"cpu": "0%", "memory": "0%", "temp": "N/A", "fps": "0"}
-alarm_playing = False
+alarm_playing = False  # 是否警报
+alarm_status = True  # 是否开启警报
 latest_temp_data = 0
 # Initialize camera
 picam2 = Picamera2()
@@ -74,13 +75,6 @@ def generate_thermal():
                     img.save(img_io, "JPEG")
                     img_io.seek(0)
 
-                    # Check temperature for alarm
-                    # temp_data = np.array(img)
-                    # max_temp = np.max(temp_data)
-                    # if max_temp > 60:
-                    #     global alarm_playing
-                    # alarm_playing = True
-
                     yield (
                         b"--frame\r\n"
                         b"Content-Type: image/jpeg\r\n\r\n"
@@ -92,8 +86,8 @@ def generate_thermal():
 
 
 def stop_alarm():
-    global alarm_playing
-    alarm_playing = False
+    global alarm_status
+    alarm_status = not alarm_status  # 反转警报开启状态
 
 
 def adaptive_quality():
@@ -169,6 +163,7 @@ def get_temperature_history(limit=100):
     if latest_temp_data > 30:
         global alarm_playing
         alarm_playing = True
+        alarm_playing = alarm_playing and alarm_status
     return temp_data
 
 
@@ -580,7 +575,7 @@ def capture_screenshot():
 @app.route("/check_temperature")
 def check_temperature():
     global latest_temp_data
-    # This is a simplified version - in a real app you'd get actual temperature data
+    global alarm_playing
     return jsonify({"max_temp": latest_temp_data, "alarm": alarm_playing})
 
 
