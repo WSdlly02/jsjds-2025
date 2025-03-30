@@ -160,12 +160,11 @@ def get_temperature_history(limit=100):
     global latest_temp_data
     latest_temp_data = round(temp_data[0][1], 2)
     conn.close()
+    global alarm_playing
     if latest_temp_data > 30:
-        global alarm_playing
         alarm_playing = True
         alarm_playing = alarm_playing and alarm_status
     else:
-        global alarm_playing
         alarm_playing = False
     return temp_data
 
