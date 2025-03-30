@@ -164,6 +164,9 @@ def get_temperature_history(limit=100):
         global alarm_playing
         alarm_playing = True
         alarm_playing = alarm_playing and alarm_status
+    else:
+        global alarm_playing
+        alarm_playing = False
     return temp_data
 
 
