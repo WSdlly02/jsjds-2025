@@ -40,7 +40,6 @@ python312.withPackages (
     typing-extensions
     # Daily runtimes
     flask
-    flask-socketio
     opencv4
     numpy
     psutil

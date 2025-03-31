@@ -8,7 +8,6 @@
     Unit.Description = "Checking beingness of the runtimes";
     Service = with inputs.self.legacyPackages."aarch64-linux"; {
       Type = "oneshot";
-      RemainAfterExit = "yes";
       ExecStart = "${pkgs.writeScript "ensure-runtimes-existence.py" ''
         #!${python312Env}/bin/python3.12
         import os
@@ -18,6 +17,7 @@
         def check_and_sync():
             # 定义需要创建的目录
             directories = [
+                os.path.expanduser("~/Documents/databases"),
                 os.path.expanduser("~/Pictures/analyzed"),
                 os.path.expanduser("~/Pictures/captured"),
             ]
@@ -32,6 +32,7 @@
                 # 创建目录（如果不存在）
                 for dir_path in directories:
                     os.makedirs(dir_path, exist_ok=True)
+                    os.chmod(dir_path, 0o755)
                     print(f"Directory ensured: {dir_path}")
 
                 # 同步文件（如果目标不存在）
@@ -41,6 +42,7 @@
 
                     if not os.path.exists(dest):
                         shutil.copy(src, dest)
+                        os.chmod(dest, 0o644)
                         print(f"File copied: {src} -> {dest}")
 
             except Exception as e:
