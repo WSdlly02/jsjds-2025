@@ -1,4 +1,3 @@
-# thermal_sensor_binary.py
 import os
 import time
 import struct
@@ -11,7 +10,7 @@ import numpy
 # 初始化 MLX90640
 i2c = board.I2C()
 mlx = adafruit_mlx90640.MLX90640(i2c)
-mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_16_HZ  # 16Hz 刷新率
+mlx.refresh_rate = adafruit_mlx90640.RefreshRate.REFRESH_32_HZ  # 32Hz 刷新率
 temps = [0.0] * 768
 
 conn = sqlite3.connect(
@@ -54,6 +53,6 @@ try:
             temp_min = numpy.min(temps)
             temp_avg = numpy.mean(temps)
             insert_data(timestamp, temp_avg, temp_min, temp_max)
-        time.sleep(1 / 16)
+        # time.sleep(1 / 32)
 except KeyboardInterrupt:
     print("程序终止")

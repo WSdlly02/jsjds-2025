@@ -1,6 +1,6 @@
 {-# LANGUAGE OverloadedStrings #-}
 
--- 添加此导入
+-- 导入JuicyPixels
 import Codec.Picture
 import Control.Monad (forever, replicateM)
 import Data.Binary.Get
@@ -8,7 +8,7 @@ import qualified Data.ByteString as B
 import qualified Data.ByteString.Lazy as BL
 import System.IO (BufferMode (..), hFlush, hSetBuffering, stdin, stdout)
 
--- 数据解析函数保持不变
+-- 数据解析函数
 parseThermalData :: Get (Double, [Float])
 parseThermalData = do
     timestamp <- getDoublele
@@ -41,10 +41,10 @@ toJetColor x = (round (clamp r * 255), round (clamp g * 255), round (clamp b * 2
         | otherwise = (1, 1, 1) -- 将特殊值映射成白色
     clamp = max 0 . min 1
 
-scaleMatrix :: Int -> [[(Int, Int, Int)]] -> [[(Int, Int, Int)]] -- 缩放矩阵
-scaleMatrix factor = concatMap (replicate factor) . map (concatMap (replicate factor)) -- 不全调用
-scaleMatrix' :: Int -> [[Int]] -> [[Int]]
-scaleMatrix' factor = concatMap (replicate factor) . map (concatMap (replicate factor))
+-- scaleMatrix :: Int -> [[(Int, Int, Int)]] -> [[(Int, Int, Int)]] -- 缩放矩阵
+-- scaleMatrix factor = concatMap (replicate factor) . map (concatMap (replicate factor)) -- 不全调用
+-- scaleMatrix' :: Int -> [[Int]] -> [[Int]]
+-- scaleMatrix' factor = concatMap (replicate factor) . map (concatMap (replicate factor))
 
 tempRecogAlgo :: [[Int]] -> [[Int]] -- 危险温度矩阵转换图像识别
 tempRecogAlgo xs = map tempRecogAlgo_step2 xs -- 脱一层外壳,长度24
@@ -89,8 +89,8 @@ mergeMatrices xs ys = zipWith mergeRow xs ys -- 逐行合并
     ---------------------------
     -- 将矩阵转换为 PNG 图像
 
-matrixToPNG :: [[(Int, Int, Int)]] -> BL.ByteString
-matrixToPNG frame = encodePng $ generateImage pixelRenderer 320 240
+matrixToPng :: [[(Int, Int, Int)]] -> BL.ByteString
+matrixToPng frame = encodePng $ generateImage pixelRenderer 32 24
   where
     pixelRenderer x y
         | y < rows && x < cols =
@@ -128,7 +128,7 @@ main = do
                             go :: [(Int, Int, Int)] -> [Float] -> [(Int, Int, Int)]
                             go acc [] = acc
                             go acc (y : ys) = go (toJetColor y : acc) ys
-                let scaledTempColorMap = scaleMatrix 10 tempColorMap -- 76800个rgb矩阵
+                -- let scaledTempColorMap = scaleMatrix 10 tempColorMap -- 76800个rgb矩阵
                 -- 基本图像处理完成
                 let warningTempMatrix = refillMatrixWithTemp tempNormalizationMatrix where -- 过滤32*24矩阵，记录危险温度
                     refillMatrixWithTemp :: [[Float]] -> [[Int]]
@@ -144,9 +144,9 @@ main = do
                                 | y < 1 = go (1 : acc) ys -- 小于40度 为测试方便，将1、2全部当成危险温度识别
                                 | otherwise = go (2 : acc) ys -- 大于等于40度
                 let recogRectangle = tempRecogAlgo warningTempMatrix
-                let filteredRecogRectangle = scaleMatrix' 10 (filterUselessWarning recogRectangle) -- 最终的overlay层
-                let frame = mergeMatrices scaledTempColorMap filteredRecogRectangle
-                let pngData = matrixToPNG frame
+                let filteredRecogRectangle = filterUselessWarning recogRectangle -- 最终的overlay层
+                let frame = mergeMatrices tempColorMap filteredRecogRectangle
+                let pngData = matrixToPng frame
                 putStr "--FRAME--\n"
                 BL.putStr pngData -- 输出帧数据
                 hFlush stdout

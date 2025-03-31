@@ -30,6 +30,7 @@ sys_info = {"cpu": "0%", "memory": "0%", "temp": "N/A", "fps": "0"}
 alarm_playing = False  # 是否警报
 alarm_status = True  # 是否开启警报
 latest_temp_data = 0
+
 # Initialize camera
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
@@ -37,6 +38,7 @@ config = picam2.create_video_configuration(
     lores={"size": (1296, 972)},  # Preview stream
     display="main",
     encode="main",
+    use_case="video",
     controls={"FrameRate": 30},
 )
 picam2.configure(config)
@@ -51,38 +53,36 @@ ANALYZED_PATH = os.path.expanduser("~/Pictures/analyzed")
 
 def generate_thermal():
     delimiter = b"--FRAME--\n"
-    buffer = b""
+    delimiter_len = len(delimiter)
+    buffer = bytearray()  # 使用可变缓冲区
+
+    # 预分配内存参数
+    frame_header = b"--frame\r\nContent-Type: image/jpeg\r\n\r\n"
+    frame_footer = b"\r\n"
 
     while True:
-        data = sys.stdin.buffer.read(4096)
+        data = sys.stdin.buffer.read(778)
+
         if not data:
             break
 
-        buffer += data
+        buffer.extend(data)  # 避免内存重复分配
 
         while True:
             idx = buffer.find(delimiter)
             if idx == -1:
                 break
 
-            frame_data = buffer[:idx]
-            buffer = buffer[idx + len(delimiter) :]
+            # 使用内存视图零拷贝操作
+            frame_data = bytes(memoryview(buffer)[:idx])
+            del buffer[: idx + delimiter_len]  # 原地删除已处理数据
 
             if frame_data:
                 try:
-                    img = Image.open(io.BytesIO(frame_data))
-                    img_io = io.BytesIO()
-                    img.save(img_io, "JPEG")
-                    img_io.seek(0)
-
-                    yield (
-                        b"--frame\r\n"
-                        b"Content-Type: image/jpeg\r\n\r\n"
-                        + img_io.getvalue()
-                        + b"\r\n"
-                    )
+                    # 直接输出JPEG二进制流
+                    yield frame_header + frame_data + frame_footer
                 except Exception as e:
-                    print(f"Decoding error: {e}")
+                    print(f"Stream error: {e}")
 
 
 def stop_alarm():
@@ -92,8 +92,8 @@ def stop_alarm():
 
 def adaptive_quality():
     cpu = psutil.cpu_percent()
-    net = psutil.net_io_counters().bytes_sent
-    return 90 if cpu < 70 and net < 1e6 else 75
+    # net = psutil.net_io_counters().bytes_sent
+    return 90 if cpu < 70 else 75
 
 
 def capture_camera_frames():
@@ -611,6 +611,4 @@ def serve_external_photos(subdir, filename):
 if __name__ == "__main__":
     threading.Thread(target=capture_camera_frames, daemon=True).start()
     threading.Thread(target=get_system_info, daemon=True).start()
-    app.run(host="0.0.0.0", port=5000, threaded=True)
-
-# !!! DATABASE LOCK : capture_screenshot() conflicts with get_temperature_history() :: SOLVED && READ PHOTOS OUTSIDE FROM /static && web scale index adjust
+    app.run(host="0.0.0.0", port=8080, threaded=True)
