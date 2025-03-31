@@ -231,7 +231,7 @@ def index():
             }
             .video-controls {
                 position: absolute;
-                right: 20px;
+                right: 40px;
                 top: 240px;
                 display: flex;
                 flex-direction: column;
@@ -302,7 +302,7 @@ def index():
             <div class="menu-item" onclick="showSection('monitor')">实时监控</div>
             <div class="menu-item" onclick="showSection('thermal')">热成像监测</div>
             <div class="menu-item" onclick="showSection('database')">数据库</div>
-            <div class="menu-item" onclick="showSection('system')">信息系统</div>
+            <div class="menu-item" onclick="showSection('system')">系统信息</div>
             <div class="menu-item" onclick="showSection('gallery')">照片墙</div>
         </div>
         
@@ -333,7 +333,8 @@ def index():
                     <img id="thermal-video" src="/thermal_feed" style="width:60%;">
                 </div>
                 <div class="video-controls">
-                    <button onclick="stopAlarm()">停止警报</button>
+                    <button onclick="stopAlarm()">关闭/开启警报</button>
+                    <button onclick="restartThermal()">重启热成像摄像头</button>
                     <div id="max-temp">当前最高温度: 加载中...</div>
                 </div>
             </div>
@@ -437,23 +438,31 @@ def index():
                     .then(data => {
                         document.getElementById('max-temp').innerHTML = '当前最高温度: ' + data.max_temp + '°C';
                        if (data.alarm) {
-    document.getElementById('alarm-indicator').classList.remove('hidden');
-    document.getElementById('alarm-audio').play();
-} else {
-    document.getElementById('alarm-indicator').classList.add('hidden');
-    document.getElementById('alarm-audio').pause();
-    document.getElementById('alarm-audio').currentTime = 0;
-}
-                    });
+                        document.getElementById('alarm-indicator').classList.remove('hidden');
+                        document.getElementById('alarm-audio').play();
+                    } else {
+                        document.getElementById('alarm-indicator').classList.add('hidden');
+                        document.getElementById('alarm-audio').pause();
+                        document.getElementById('alarm-audio').currentTime = 0;
+                    }
+                });
             }
             
             function stopAlarm() {
-    fetch('/stop_alarm');
-    document.getElementById('alarm-audio').pause();
-    document.getElementById('alarm-audio').currentTime = 0;
-    document.getElementById('alarm-indicator').classList.add('hidden');
-}
-            
+                fetch('/stop_alarm');
+                document.getElementById('alarm-audio').pause();
+                document.getElementById('alarm-audio').currentTime = 0;
+                document.getElementById('alarm-indicator').classList.add('hidden');
+            }
+
+            function restartThermal() {
+                fetch('/restart_server')
+                    .then(response => response.json())
+                    .then(data => {
+                        alert('正在重启热成像摄像头，请等待几秒并刷新页面！');
+                    });
+            }
+
             // Load temperature data
             function loadTemperatureData() {
                 fetch('/get_temperature_data')
@@ -604,6 +613,12 @@ def serve_external_photos(subdir, filename):
     elif subdir == "analyzed":
         return send_from_directory(ANALYZED_PATH, filename)
     abort(404)
+
+
+@app.route("/restart_server")
+def restart_server():
+    os.system("systemctl --user restart central-compositor.service")
+    return jsonify({"status": "success"})
 
 
 if __name__ == "__main__":
