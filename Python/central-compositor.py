@@ -8,13 +8,11 @@ from flask import (
     abort,
 )
 import sys
-import io
 import cv2
 import numpy as np
 import psutil
 import time
 import threading
-from PIL import Image
 import screenshotAnalyzer
 import os
 from datetime import datetime
