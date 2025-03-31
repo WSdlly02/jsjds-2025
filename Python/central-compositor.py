@@ -456,11 +456,8 @@ def index():
             }
 
             function restartThermal() {
-                fetch('/restart_server')
-                    .then(response => response.json())
-                    .then(data => {
-                        alert('正在重启热成像摄像头，请等待几秒并刷新页面！');
-                    });
+                alert('正在重启热成像摄像头，请等待几秒并刷新页面！');
+                fetch('/restart_server');
             }
 
             // Load temperature data
