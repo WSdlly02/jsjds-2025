@@ -3,6 +3,7 @@ from flask import (
     Flask,
     render_template_string,
     Response,
+    request,
     jsonify,
     send_from_directory,
     abort,
@@ -29,7 +30,7 @@ sys_info = {"cpu": "0%", "memory": "0%", "temp": "N/A", "fps": "0"}
 alarm_playing = False  # 是否警报
 alarm_status = True  # 是否开启警报
 latest_temp_data = 0
-
+self_file_path = os.path.dirname(os.path.realpath(__file__))
 # Initialize camera
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
@@ -39,6 +40,7 @@ config = picam2.create_video_configuration(
     encode="main",
     use_case="video",
     controls={"FrameRate": 30},
+    queue=False,
 )
 picam2.configure(config)
 picam2.start()
@@ -100,11 +102,11 @@ def capture_camera_frames():
     while True:
         with frame_lock:
             frame = picam2.capture_array("main")
-            frame = cv2.cvtColor(frame, cv2.COLOR_RGB2BGR)
+            frame = cv2.cvtColor(src=frame, code=cv2.COLOR_RGB2BGR)
 
             # Sharpen
-            kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-            frame = cv2.filter2D(frame, -1, kernel)
+            # kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
+            # frame = cv2.filter2D(frame, -1, kernel)
 
             quality = adaptive_quality()
             _, jpeg = cv2.imencode(
@@ -310,6 +312,26 @@ def index():
                     50% { opacity: 0.5; }
                     100% { opacity: 1; }
                 }
+                .option-list {
+                    width: 100%;
+                    margin: 10px 0;
+                    border-radius: 4px;
+                    overflow: hidden;
+                }
+                .option-item {
+                    padding: 8px 16px;
+                    background: #3a3a3a;
+                    color: white;
+                    cursor: pointer;
+                    transition: all 0.3s;
+                    border-bottom: 1px solid #444;
+                }
+                .option-item:hover {
+                    background: #4CAF50;
+                }
+                .option-item:last-child {
+                    border-bottom: none;
+                }
             </style>
         </head>
         <body>
@@ -336,6 +358,10 @@ def index():
                         <button onclick="zoomIn()">放大</button>
                         <button onclick="zoomOut()">缩小</button>
                         <button onclick="captureScreenshot()">截屏</button>
+                        <div class="option-list">
+                            <div class="option-item" data-value="best-train1.pt" onclick="handleSelection(this)">best-train1.pt</div>
+                            <div class="option-item" data-value="best-train2.pt" onclick="handleSelection(this)">best-train2.pt</div>
+                        </div>
                         <select id="zoom-level" onchange="changeZoom()">
                             <option value="100">100%</option>
                             <option value="150">150%</option>
@@ -441,15 +467,28 @@ def index():
                     document.getElementById('monitor-video').style.width = currentZoom + '%';
                 }
                 
+                let currentModel = 'best-train1.pt';
+                function handleSelection(element) {
+                    // 清除所有选项的选中状态
+                    document.querySelectorAll('.option-item').forEach(item => {
+                        item.style.backgroundColor = '#3a3a3a';
+                    });
+
+                    // 设置当前选中状态
+                    element.style.backgroundColor = '#2d7030';
+                    // 获取选择值
+                    currentModel = element.dataset.value;
+                }
+
                 // Capture screenshot
                 function captureScreenshot() {
-                    fetch('/capture_screenshot')
+                    fetch(`/capture_screenshot?model=${currentModel}`)
                         .then(response => response.json())
                         .then(data => {
-                            alert('截图已保存: ' + data.filename);
+                            alert(`截图已保存，使用模型: ${currentModel}，文件名: ${data.filename}`);
                         });
                 }
-                
+
                 // Temperature alarm
                 function checkTemperature() {
                     fetch('/check_temperature')
@@ -584,6 +623,8 @@ def system_info():
 
 @app.route("/capture_screenshot")
 def capture_screenshot():
+    global self_file_path
+    model = request.args.get("model")
     if latest_frame:
         timestamp = time.time()
         filename = f"{datetime.fromtimestamp(int(timestamp))}.jpg"
@@ -591,10 +632,17 @@ def capture_screenshot():
 
         with open(filepath, "wb") as f:
             f.write(latest_frame)
-
-        # 修改分析结果保存路径
-        screenshotAnalyzer.screenshot_process(timestamp, latest_frame, filename)
-
+        if model == "best-train1.pt":
+            # 选择的模型路径
+            model_path = self_file_path + "/models/best-train1.pt"
+            screenshotAnalyzer.screenshot_process(
+                timestamp, latest_frame, filename, model_path
+            )
+        elif model == "best-train2.pt":
+            model_path = self_file_path + "/models/best-train2.pt"
+            screenshotAnalyzer.screenshot_process(
+                timestamp, latest_frame, filename, model_path
+            )
         return jsonify({"status": "success", "filename": filename})
     return jsonify({"status": "error", "message": "No frame available"})
 

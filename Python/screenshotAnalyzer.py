@@ -10,7 +10,7 @@ conn = sqlite3.connect(
 cursor = conn.cursor()
 
 
-def screenshot_process(timestamp, last_frame, filename):
+def screenshot_process(timestamp, last_frame, filename, model_path):
     cursor.execute(
         """
     INSERT INTO "photos-timestamp-data" (timestamp)
@@ -23,4 +23,4 @@ def screenshot_process(timestamp, last_frame, filename):
         os.path.expanduser(f"~/Pictures/captured/{filename}"), "wb"
     ) as f:  # 保存截图
         f.write(last_frame)
-    inference.inference_screenshot(filename)  # 将截图交给被调用函数推理
+    inference.inference_screenshot(filename, model_path)  # 将截图交给被调用函数推理
