@@ -1,6 +1,6 @@
 {
   fetchFromGitHub,
-  lib,
+  selectedModel,
   stdenvNoCC,
 }:
 
@@ -11,7 +11,7 @@ stdenvNoCC.mkDerivation rec {
   src = fetchFromGitHub {
     owner = "WSdlly02";
     repo = "jsjds-2025";
-    rev = "e4a138dec3cae9e29a7b72d96e45212dcdf39884";
+    rev = "6ce7a73c40ddca24de0bac32f71de4d66933d5e9";
     #hash = "sha256-KK85UCzL/r3TMfMEDuOBX1teuy+fL5WXnNp8Llakty0=";
   };
   strictDeps = true;
@@ -26,6 +26,6 @@ stdenvNoCC.mkDerivation rec {
   '';
   postInstall = ''
     substituteInPlace $out/Python/inference.py \
-    --replace "os.path.abspath(\"./Python/models/best-train1.pt\")" "\"$out/Python/models/best-train1.pt\"" 
+    --replace "os.path.abspath(\"./Python/models/best-train1.pt\")" "\"$out/Python/models/${selectedModel}\"" 
   '';
 }
