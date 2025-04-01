@@ -43,6 +43,7 @@ python312.withPackages (
     opencv4
     numpy
     psutil
+    waitress # Web Server
     ultralytics # YOLO
   ]
   ++ extraPackages
