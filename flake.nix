@@ -71,8 +71,7 @@
 
           legacyPackages = {
             # system pkgs
-            selfSrc = callPackage ./Nix/pkgs/selfSrc.nix { };
-            thermal-data-processor = callPackage ./Nix/pkgs/thermal-data-processor.nix { inherit inputs; };
+            selfRuntime = callPackage ./Nix/pkgs/selfRuntime.nix { inherit inputs; };
             haskellEnv = callPackage ./Nix/pkgs/haskellEnv.nix { };
             python312Env = callPackage ./Nix/pkgs/python312Env.nix { inherit inputs; };
             python312FHSEnv = callPackage ./Nix/pkgs/python312FHSEnv.nix { inherit inputs; }; # depends on python312Env

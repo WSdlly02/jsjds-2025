@@ -13,7 +13,7 @@
     Service = with inputs.self.legacyPackages."aarch64-linux"; {
       Environment = "PATH=${pkgs.systemd}/bin";
       ExecStartPre = "${pkgs.coreutils}/bin/sleep 5";
-      ExecStart = "${pkgs.runtimeShell} -c \"${python312Env}/bin/python3.12 ${selfSrc}/Python/thermal-data-reader.py | ${thermal-data-processor}/bin/thermal-data-processor | ${python312Env}/bin/python3.12 ${selfSrc}/Python/central-compositor.py\"";
+      ExecStart = "${pkgs.runtimeShell} -c \"${python312Env}/bin/python3.12 ${selfRuntime}/thermal-data-reader.py | ${selfRuntime}/thermal-data-processor | ${python312Env}/bin/python3.12 ${selfRuntime}/central-compositor.py\"";
     };
     Install = {
       WantedBy = [ "default.target" ];

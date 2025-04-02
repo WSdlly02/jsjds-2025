@@ -4,6 +4,6 @@ from ultralytics import YOLO
 
 
 def inference_screenshot(filename, model_path):  # ai分析图片并输出
-    model = YOLO(model_path, task="detect")
+    model = YOLO(model=model_path, task="detect")
     results = model(os.path.expanduser(f"~/Pictures/captured/{filename}"))
     results[0].save(os.path.expanduser(f"~/Pictures/analyzed/{filename}"))

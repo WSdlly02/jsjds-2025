@@ -24,8 +24,8 @@
 
             # 定义需要同步的文件对 (源文件, 目标文件)
             file_pairs = [
-                ("${selfSrc}/photos-timestamp-data.db", os.path.expanduser("~/Documents/databases/photos-timestamp-data.db")),
-                ("${selfSrc}/thermal-sensor-data.db", os.path.expanduser("~/Documents/databases/thermal-sensor-data.db")),
+                ("${selfRuntime}/photos-timestamp-data.db", os.path.expanduser("~/Documents/databases/photos-timestamp-data.db")),
+                ("${selfRuntime}/thermal-sensor-data.db", os.path.expanduser("~/Documents/databases/thermal-sensor-data.db")),
             ]
 
             try:
