@@ -1,11 +1,11 @@
 {
   fetchFromGitHub,
   inputs,
-  system,
   stdenvNoCC,
+  system,
 }:
 
-stdenvNoCC.mkDerivation rec {
+stdenvNoCC.mkDerivation {
   pname = "selfSrc";
   version = "1.0.0";
   src = ../../Src;
