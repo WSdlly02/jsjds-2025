@@ -56,7 +56,6 @@
           };
           inherit (pkgs)
             callPackage
-            mkShell
             ;
           inherit (pkgs.python312Packages)
             toPythonModule

@@ -6,7 +6,7 @@
 }:
 
 stdenvNoCC.mkDerivation {
-  pname = "selfSrc";
+  pname = "selfRuntime";
   version = "1.0.0";
   src = ../../Src;
   nativeBuildInputs = [ inputs.self.legacyPackages."${system}".haskellEnv ];
