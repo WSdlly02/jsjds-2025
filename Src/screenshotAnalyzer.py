@@ -23,4 +23,6 @@ def screenshot_process(timestamp, last_frame, filename, model_path):
         os.path.expanduser(f"~/Pictures/captured/{filename}"), "wb"
     ) as f:  # 保存截图
         f.write(last_frame)
-    inference.inference_screenshot(filename, model_path)  # 将截图交给被调用函数推理
+    return inference.inference_screenshot(
+        filename, model_path
+    )  # 将截图交给被调用函数推理

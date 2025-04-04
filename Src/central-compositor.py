@@ -29,6 +29,8 @@ latest_frame = None
 sys_info = {"cpu": "0%", "memory": "0%", "temp": "N/A", "fps": "0"}
 alarm_playing = False  # 是否警报
 alarm_status = True  # 是否开启警报
+capture_status = False  # 是否分析图片
+selected_model = "best-train1.pt"  # 默认使用的模型
 latest_temp_data = 0
 self_file_path = os.path.dirname(os.path.realpath(__file__))
 # Initialize camera
@@ -184,6 +186,40 @@ def get_captured_photos():
     return sorted(photos, key=lambda x: x["timestamp"], reverse=True)
 
 
+def analyzing_screenshots():
+    global latest_frame, self_file_path, capture_status, selected_model
+    latest_analyzed_frame = None
+    while True:
+        if capture_status and latest_frame:
+            time.sleep(1)
+            timestamp = time.time()
+            filename = f"{datetime.fromtimestamp(int(timestamp))}.jpg"
+            filepath = os.path.join(CAPTURED_PATH, filename)
+            model_path = None
+            with open(filepath, "wb") as f:
+                f.write(latest_frame)
+            if selected_model == "best-train1.pt":
+                # 选择的模型路径
+                model_path = self_file_path + "/models/best-train1.pt"
+            elif selected_model == "best-train2.pt":
+                model_path = self_file_path + "/models/best-train2.pt"
+            latest_analyzed_frame = screenshotAnalyzer.screenshot_process(
+                timestamp, latest_frame, filename, model_path
+            )
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n"
+                + latest_analyzed_frame
+                + b"\r\n\r\n"
+            )
+
+        elif latest_frame:
+            yield (
+                b"--frame\r\n"
+                b"Content-Type: image/jpeg\r\n\r\n" + latest_frame + b"\r\n\r\n"
+            )
+
+
 @app.route("/")
 def index():
     return render_template("index.html")
@@ -215,30 +251,22 @@ def system_info():
     return jsonify(sys_info)
 
 
-@app.route("/capture_screenshot")
-def capture_screenshot():
-    global self_file_path
-    model = request.args.get("model")
-    if latest_frame:
-        timestamp = time.time()
-        filename = f"{datetime.fromtimestamp(int(timestamp))}.jpg"
-        filepath = os.path.join(CAPTURED_PATH, filename)
+@app.route("/start_capture_screenshot")
+def start_capture_screenshot():
+    global capture_status, selected_model
+    selected_model = request.args.get("model")
+    capture_status = not capture_status
+    return jsonify({"status": "success"})
 
-        with open(filepath, "wb") as f:
-            f.write(latest_frame)
-        if model == "best-train1.pt":
-            # 选择的模型路径
-            model_path = self_file_path + "/models/best-train1.pt"
-            screenshotAnalyzer.screenshot_process(
-                timestamp, latest_frame, filename, model_path
-            )
-        elif model == "best-train2.pt":
-            model_path = self_file_path + "/models/best-train2.pt"
-            screenshotAnalyzer.screenshot_process(
-                timestamp, latest_frame, filename, model_path
-            )
-        return jsonify({"status": "success", "filename": filename})
-    return jsonify({"status": "error", "message": "No frame available"})
+
+@app.route("/continuously_analyzing_screenshots")
+def continuously_analyzing_screenshots():
+    return Response(
+        analyzing_screenshots(), mimetype="multipart/x-mixed-replace; boundary=frame"
+    )
+
+
+# 摁下开始分析按钮，才开始截取画面
 
 
 @app.route("/check_temperature")
@@ -284,6 +312,7 @@ def restart_server():
 if __name__ == "__main__":
     threading.Thread(target=capture_camera_frames, daemon=True).start()
     threading.Thread(target=get_system_info, daemon=True).start()
+    threading.Thread(target=analyzing_screenshots, daemon=True).start()
     waitress.serve(app, host="0.0.0.0", port=8080, threads=12)
 
 # !!! TODO: CHANGE THERMAL THRESHOLD
