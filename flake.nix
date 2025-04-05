@@ -49,7 +49,7 @@
             config = {
               allowUnfree = true;
             };
-            overlays = [ self.overlays.pytorch-overlay ];
+            overlays = [ ];
           };
           inherit (pkgs)
             callPackage

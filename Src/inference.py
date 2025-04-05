@@ -9,6 +9,7 @@ model = None
 def inference_screenshot(filename, model_path):  # ai分析图片并输出
     model = YOLO(model=model_path, task="detect")
     results = model(os.path.expanduser(f"~/Pictures/captured/{filename}"))
+    results[0].save(os.path.expanduser(f"~/Pictures/analyzed/{filename}"))
     annotated_image = results[0].plot()  # 返回BGR格式的Numpy数组
 
     # 将Numpy数组转为二进制
