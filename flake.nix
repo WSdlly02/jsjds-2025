@@ -22,7 +22,10 @@
     }@inputs:
     flake-parts.lib.mkFlake { inherit inputs; } {
       flake.homeConfigurations."wsdlly02" = home-manager.lib.homeManagerConfiguration {
-        extraSpecialArgs = { inherit inputs; };
+        extraSpecialArgs = {
+          inherit inputs;
+          username = "wsdlly02";
+        };
         modules = [
           ./Nix/home-manager
         ];
@@ -31,16 +34,10 @@
           config = {
             allowUnfree = true;
           };
-          overlays = [ self.overlays.pytorch-overlay ];
+          overlays = [ ];
         };
       };
-      flake.overlays = {
-        pytorch-overlay = final: prev: {
-          # python312 = prev.python312.override {
-          #   packageOverrides = pyfinal: pyprev: { torch = pyprev.torch.override { vulkanSupport = true; }; };
-          # };
-        };
-      };
+      flake.overlays = { };
       perSystem =
         {
           system,

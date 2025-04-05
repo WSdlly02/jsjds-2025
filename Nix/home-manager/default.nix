@@ -1,6 +1,7 @@
 {
   inputs,
   pkgs,
+  username,
   ...
 }:
 {
@@ -14,8 +15,8 @@
     lazygit.enable = true;
   };
   home = {
-    username = "wsdlly02";
-    homeDirectory = "/home/wsdlly02";
+    inherit username;
+    homeDirectory = "/home/${username}";
     packages = with pkgs; [
       btop
       fastfetch

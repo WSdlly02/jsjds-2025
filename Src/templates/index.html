@@ -25,7 +25,7 @@
       padding: 70px 20px 20px 220px;
       /* 顶部留出顶栏空间 */
       /* 左侧留出菜单空间 */
-      background: white;
+      background: #F0F0F0;
       color: black;
       font-family: Arial, sans-serif;
       min-height: 100vh;
@@ -41,7 +41,7 @@
       /* 增加底部空间 */
       position: relative;
       /* 为logo定位提供基准 */
-      background: #f5f5f5;
+      background: #F0F0F0;
       height: 40px;
       /* 适配顶栏高度 */
       position: fixed;
@@ -54,7 +54,7 @@
     .menu-logo {
       width: 120px;
       padding: 10px;
-      background: rgba(255, 255, 255, 0.9);
+      background: #F0F0F0;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
     }
@@ -70,7 +70,7 @@
       margin: 15px auto 0;
       /* 上边距15px 水平居中 */
       padding: 10px;
-      background: rgba(255, 255, 255, 0.9);
+      background: #F0F0F0;
       border-radius: 8px;
       box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
       /* 适当缩小 */
@@ -78,8 +78,8 @@
     }
 
     .menu-item {
-      background: #4169E1;
-      color: white;
+      background: #0070C0;
+      color: #F0F0F0;
       padding: 15px;
       text-align: left;
       border-radius: 4px;
@@ -89,12 +89,12 @@
     }
 
     .menu-item:hover {
-      background: #4169E1;
+      background: #0070C0;
       transform: scale(1.05);
     }
 
     .content {
-      background: #f5f5f5;
+      background: #F0F0F0;
       border-radius: 8px;
       padding: 20px;
       min-height: 90vh;
@@ -124,8 +124,8 @@
 
     button {
       padding: 8px 16px;
-      background: #4CAF50;
-      color: white;
+      background: #008000;
+      color: #F0F0F0;
       border: none;
       border-radius: 4px;
       cursor: pointer;
@@ -144,7 +144,7 @@
     }
 
     th {
-      background-color: #333;
+      background-color: #F0F0F0;
     }
 
     .photo-grid {
@@ -178,7 +178,7 @@
     }
 
     .alarm {
-      color: red;
+      color: #E63946;
       font-weight: bold;
       animation: blink 1s infinite;
     }
@@ -206,15 +206,15 @@
 
     .option-item {
       padding: 8px 16px;
-      background: #4169E1;
-      color: white;
+      background: #0070C0;
+      color: #F0F0F0;
       cursor: pointer;
       transition: all 0.3s;
       border-bottom: 1px solid #444;
     }
 
     .option-item:hover {
-      background: #4CAF50;
+      background: #008000;
     }
 
     .option-item:last-child {
@@ -227,7 +227,7 @@
       left: 0;
       width: 100%;
       height: 60px;
-      background: linear-gradient(135deg, #87CEEB 25%, #ADD8E6 50%, #87CEEB 75%);
+      background: #0062a8;
       background-size: 400% 400%;
       animation: wave 15s linear infinite;
       display: flex;
@@ -248,10 +248,23 @@
     }
 
     .top-bar h1 {
-      color: white;
+      color: #F0F0F0;
       margin: 0;
       font-size: 24px;
       text-shadow: 1px 1px 3px rgba(0, 0, 0, 0.3);
+    }
+
+    #thermal-alert-overlay {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      font-size: 72px;
+      color: #F54867;
+      text-shadow: 0 0 10px rgba(255, 0, 0, 0.5);
+      z-index: 1001;
+      animation: blink 0.5s infinite;
+      pointer-events: none;
     }
   </style>
 </head>
@@ -279,8 +292,8 @@
     <div id="monitor">
       <h2>树叶健康监测</h2>
       <div class="video-container">
-        <img id="monitor-video" src="/video_feed" style="width:60%;">
-        <img id="monitor-video" src="/continuously_analyzing_screenshots" alt="辅助摄像头画面" style="width:40%;">
+        <img id="monitor-video" src="/video_feed" style="width:80%;">
+        <img id="monitor-video" src="/continuously_analyzing_screenshots" alt="辅助摄像头画面" style="width:60%;">
       </div>
       <div class="video-controls">
         <button onclick="zoomIn()">放大</button>
@@ -303,7 +316,8 @@
     <div id="thermal" class="hidden">
       <h2>火灾预防系统 <span id="alarm-indicator" class="hidden alarm">高温警报!</span></h2>
       <div class="video-container">
-        <img id="thermal-video" src="/thermal_feed" style="width:60%;">
+        <img id="thermal-video" src="/thermal_feed" style="width:100%;">
+        <div id="thermal-alert-overlay" class="hidden">⚠️</div>
       </div>
       <div class="video-controls">
         <button onclick="stopAlarm()">关闭/开启警报</button>
@@ -423,9 +437,11 @@
           document.getElementById('max-temp').innerHTML = '当前最高温度: ' + data.max_temp + '°C';
           if (data.alarm) {
             document.getElementById('alarm-indicator').classList.remove('hidden');
+            document.getElementById('thermal-alert-overlay').classList.remove('hidden');
             document.getElementById('alarm-audio').play();
           } else {
             document.getElementById('alarm-indicator').classList.add('hidden');
+            document.getElementById('thermal-alert-overlay').classList.add('hidden');
             document.getElementById('alarm-audio').pause();
             document.getElementById('alarm-audio').currentTime = 0;
           }
