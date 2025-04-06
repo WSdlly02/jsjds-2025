@@ -30,6 +30,7 @@ sys_info = {"cpu": "0%", "memory": "0%", "temp": "N/A", "fps": "0"}
 alarm_playing = False  # 是否警报
 alarm_status = True  # 是否开启警报
 capture_status = False  # 是否分析图片
+leaf_status = False  # 树叶是否染病
 selected_model = "best-train1.pt"  # 默认使用的模型
 latest_temp_data = 0
 self_file_path = os.path.dirname(os.path.realpath(__file__))
@@ -160,11 +161,11 @@ def get_temperature_history(limit=100):
         (limit,),
     )
     temp_data = cursor.fetchall()
-    global latest_temp_data
+    global latest_temp_data, alarm_playing, alarm_status
     latest_temp_data = round(temp_data[0][1], 2)
     conn.close()
-    global alarm_playing
-    if latest_temp_data > 30:
+    # 警报部分
+    if latest_temp_data > 30 or leaf_status:
         alarm_playing = True
         alarm_playing = alarm_playing and alarm_status
     else:
@@ -187,7 +188,7 @@ def get_captured_photos():
 
 
 def analyzing_screenshots():
-    global latest_frame, self_file_path, capture_status, selected_model
+    global latest_frame, self_file_path, capture_status, selected_model, leaf_status
     latest_analyzed_frame = None
     while True:
         if capture_status and latest_frame:
@@ -203,7 +204,7 @@ def analyzing_screenshots():
                 model_path = self_file_path + "/models/best-train1.pt"
             elif selected_model == "best-train2.pt":
                 model_path = self_file_path + "/models/best-train2.pt"
-            latest_analyzed_frame = screenshotAnalyzer.screenshot_process(
+            latest_analyzed_frame, leaf_status = screenshotAnalyzer.screenshot_process(
                 timestamp, latest_frame, filename, model_path
             )
             yield (
@@ -214,6 +215,7 @@ def analyzing_screenshots():
             )
 
         elif latest_frame:
+            leaf_status = False
             yield (
                 b"--frame\r\n"
                 b"Content-Type: image/jpeg\r\n\r\n" + latest_frame + b"\r\n\r\n"
