@@ -17,6 +17,7 @@ python312.withPackages (
     mlx90460-driver.adafruit-circuitpython-requests
     mlx90460-driver.adafruit-circuitpython-typing
     mlx90460-driver.rpi-ws281x
+    ncnn
     picamera2
     pidng
     simplejpeg

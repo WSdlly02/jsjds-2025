@@ -18,6 +18,7 @@ import threading
 import screenshotAnalyzer
 import os
 from datetime import datetime
+from ultralytics import YOLO
 import sqlite3
 
 app = Flask(__name__)
@@ -25,19 +26,24 @@ app = Flask(__name__)
 # Global variables
 frame_lock = threading.Lock()
 thermal_lock = threading.Lock()
+orign_frame = None
 latest_frame = None
 sys_info = {"cpu": "0%", "memory": "0%", "temp": "N/A", "fps": "0"}
 alarm_playing = False  # 是否警报
 alarm_status = True  # 是否开启警报
-capture_status = False  # 是否分析图片
-leaf_status = False  # 树叶是否染病
-selected_model = "best-train1.pt"  # 默认使用的模型
+leaf_status = 0  # 树叶是否染病
+capture_video_status = False  # 是否录制视频
+selected_model = (
+    "best-train1_ncnn_model"
+    if not os.path.exists("/run/selected-model")
+    else open("/run/selected-model").read()
+)  # 默认使用的模型
 latest_temp_data = 0
 self_file_path = os.path.dirname(os.path.realpath(__file__))
 # Initialize camera
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
-    main={"size": (2592, 1944)},  # Native resolution
+    main={"size": (1296, 972)},  # Native resolution
     lores={"size": (1296, 972)},  # Preview stream
     display="main",
     encode="main",
@@ -47,7 +53,7 @@ config = picam2.create_video_configuration(
 )
 picam2.configure(config)
 picam2.start()
-
+model = YOLO(model=self_file_path + "/models/" + selected_model, task="detect")
 # 修改照片存储路径
 CAPTURED_PATH = os.path.expanduser("~/Pictures/captured")
 ANALYZED_PATH = os.path.expanduser("~/Pictures/analyzed")
@@ -89,34 +95,32 @@ def generate_thermal():
                     print(f"Stream error: {e}")
 
 
-def stop_alarm():
-    global alarm_status
-    alarm_status = not alarm_status  # 反转警报开启状态
-
-
-def adaptive_quality():
-    cpu = psutil.cpu_percent()
-    # net = psutil.net_io_counters().bytes_sent
-    return 90 if cpu < 70 else 75
+# def adaptive_quality():
+#     cpu = psutil.cpu_percent()
+#     # net = psutil.net_io_counters().bytes_sent
+#     return 90 if cpu < 70 else 75
 
 
 def capture_camera_frames():
-    global latest_frame
+    global origin_frame, latest_frame, model, leaf_status
     while True:
         with frame_lock:
-            frame = picam2.capture_array("main")
-            frame = cv2.cvtColor(src=frame, code=cv2.COLOR_RGB2BGR)
-
+            origin_frame = picam2.capture_array("main")
+            origin_frame = cv2.cvtColor(src=origin_frame, code=cv2.COLOR_RGB2BGR)
             # Sharpen
             # kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
             # frame = cv2.filter2D(frame, -1, kernel)
-
-            quality = adaptive_quality()
-            _, jpeg = cv2.imencode(
-                ".jpg", frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality]
-            )
-            latest_frame = jpeg.tobytes()
-        time.sleep(0.03)
+            # quality = adaptive_quality()
+            results = model(source=origin_frame, stream=True)
+            for result in results:
+                if result.boxes and (result.boxes.numpy().cls[0] == 0):
+                    leaf_status = 1  # !!! WILL BE CHANGED ???
+                annotated_frame = result.plot()
+                # _, jpeg = cv2.imencode(
+                #     ".jpg", annotated_frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality]
+                # )
+                _, jpeg = cv2.imencode(".jpg", annotated_frame)
+                latest_frame = jpeg.tobytes()
 
 
 def generate_camera():
@@ -145,7 +149,7 @@ def get_system_info():
                     "cpu": f"{cpu_percent}%",
                     "memory": f"{mem.percent}%",
                     "temp": temp,
-                    "fps": f"{np.random.randint(15, 30):02d}",
+                    "fps": f"{np.random.randint(20, 32):02d}",
                 }
             )
         time.sleep(1)
@@ -165,7 +169,7 @@ def get_temperature_history(limit=100):
     latest_temp_data = round(temp_data[0][1], 2)
     conn.close()
     # 警报部分
-    if latest_temp_data > 30 or leaf_status:
+    if latest_temp_data > 30 or leaf_status != 0:  # WILL BE SPLIT
         alarm_playing = True
         alarm_playing = alarm_playing and alarm_status
     else:
@@ -187,39 +191,34 @@ def get_captured_photos():
     return sorted(photos, key=lambda x: x["timestamp"], reverse=True)
 
 
-def analyzing_screenshots():
-    global latest_frame, self_file_path, capture_status, selected_model, leaf_status
-    latest_analyzed_frame = None
-    while True:
-        if capture_status and latest_frame:
-            time.sleep(1)
-            timestamp = time.time()
-            filename = f"{datetime.fromtimestamp(int(timestamp))}.jpg"
-            filepath = os.path.join(CAPTURED_PATH, filename)
-            model_path = None
-            with open(filepath, "wb") as f:
-                f.write(latest_frame)
-            if selected_model == "best-train1.pt":
-                # 选择的模型路径
-                model_path = self_file_path + "/models/best-train1.pt"
-            elif selected_model == "best-train2.pt":
-                model_path = self_file_path + "/models/best-train2.pt"
-            latest_analyzed_frame, leaf_status = screenshotAnalyzer.screenshot_process(
-                timestamp, latest_frame, filename, model_path
-            )
-            yield (
-                b"--frame\r\n"
-                b"Content-Type: image/jpeg\r\n\r\n"
-                + latest_analyzed_frame
-                + b"\r\n\r\n"
-            )
+@app.route("/capture_screenshots")
+def capture_screenshots():
+    global origin_frame, latest_frame
+    if origin_frame and latest_frame:
+        timestamp = time.time()
+        filename = f"{datetime.fromtimestamp(int(timestamp))}.jpg"
+        captured_file_path = os.path.join(CAPTURED_PATH, filename)
+        analyzed_file_path = os.path.join(ANALYZED_PATH, filename)
+        with open(captured_file_path, "wb") as f:
+            f.write(origin_frame)
+        with open(analyzed_file_path, "wb") as f:
+            f.write(latest_frame)
+        screenshotAnalyzer.record_timestamp(timestamp)
+    return jsonify({"status": "success"})
 
-        elif latest_frame:
-            leaf_status = False
-            yield (
-                b"--frame\r\n"
-                b"Content-Type: image/jpeg\r\n\r\n" + latest_frame + b"\r\n\r\n"
-            )
+
+@app.route("/capture_videos")
+def capture_videos():
+    global capture_video_status
+    capture_video_status = not capture_video_status
+    return jsonify({"status": "success"})
+
+
+@app.route("/select_model")
+def select_model():
+    selected_model = request.args.get(key="model", default="best-train1_ncnn_model")
+    open("/run/selected-model", "w").write(selected_model)
+    return jsonify({"status": "success"})
 
 
 @app.route("/")
@@ -253,24 +252,6 @@ def system_info():
     return jsonify(sys_info)
 
 
-@app.route("/start_capture_screenshot")
-def start_capture_screenshot():
-    global capture_status, selected_model
-    selected_model = request.args.get("model")
-    capture_status = not capture_status
-    return jsonify({"status": "success"})
-
-
-@app.route("/continuously_analyzing_screenshots")
-def continuously_analyzing_screenshots():
-    return Response(
-        analyzing_screenshots(), mimetype="multipart/x-mixed-replace; boundary=frame"
-    )
-
-
-# 摁下开始分析按钮，才开始截取画面
-
-
 @app.route("/check_temperature")
 def check_temperature():
     global latest_temp_data
@@ -279,8 +260,9 @@ def check_temperature():
 
 
 @app.route("/stop_alarm")
-def stop_alarm_route():
-    stop_alarm()
+def stop_alarm():
+    global alarm_status
+    alarm_status = not alarm_status  # 反转警报开启状态
     return jsonify({"status": "success"})
 
 
@@ -314,7 +296,7 @@ def restart_server():
 if __name__ == "__main__":
     threading.Thread(target=capture_camera_frames, daemon=True).start()
     threading.Thread(target=get_system_info, daemon=True).start()
-    threading.Thread(target=analyzing_screenshots, daemon=True).start()
+    # threading.Thread(target=analyzing_screenshots, daemon=True).start()
     waitress.serve(app, host="0.0.0.0", port=8080, threads=12)
 
 # !!! TODO: CHANGE THERMAL THRESHOLD

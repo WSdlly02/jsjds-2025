@@ -14,7 +14,7 @@ def inference_screenshot(filename, model_path):  # ai分析图片并输出
         stream=True,
     )
     for result in results:
-        if result.boxes and (result.boxes.numpy().cls in [0]):  # 有病的树叶
+        if result.boxes and (result.boxes.numpy().cls[0] == 0):  # 有病的树叶
             print("Diseased!")
             leaf_status = True
         else:

@@ -75,6 +75,7 @@
             kmsxx-src = callPackage ./Nix/pkgs/kmsxx-src.nix { };
             libcamera = toPythonModule (callPackage ./Nix/pkgs/libcamera-raspi.nix { inherit inputs; });
             libpisp = callPackage ./Nix/pkgs/libpisp.nix { };
+            ncnn = callPackage ./Nix/pkgs/ncnn.nix { };
             picamera2 = callPackage ./Nix/pkgs/picamera2.nix { };
             pidng = callPackage ./Nix/pkgs/pidng.nix { };
             rpi-kms = toPythonModule (callPackage ./Nix/pkgs/rpi-kms.nix { inherit inputs; });
@@ -82,7 +83,7 @@
             v4l2-python3 = callPackage ./Nix/pkgs/v4l2-python3.nix { };
             mlx90460-driver =
               let
-                driverPath = "./Nix/pkgs/mlx90460-driver";
+                driverPath = "Nix/pkgs/mlx90460-driver";
               in
               {
                 Adafruit-Blinka = callPackage ./${driverPath}/Adafruit-Blinka.nix { };

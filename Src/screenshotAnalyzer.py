@@ -1,7 +1,6 @@
 # 应当从属于central-compositor.py，被它调用
 import os
 import sqlite3
-import inference
 
 conn = sqlite3.connect(
     os.path.expanduser("~/Documents/databases/photos-timestamp-data.db"),
@@ -10,7 +9,7 @@ conn = sqlite3.connect(
 cursor = conn.cursor()
 
 
-def screenshot_process(timestamp, last_frame, filename, model_path):
+def record_timestamp(timestamp):
     cursor.execute(
         """
     INSERT INTO "photos-timestamp-data" (timestamp)
@@ -19,10 +18,3 @@ def screenshot_process(timestamp, last_frame, filename, model_path):
         (timestamp,),
     )
     conn.commit()  # 记录并转换拍照时间
-    with open(
-        os.path.expanduser(f"~/Pictures/captured/{filename}"), "wb"
-    ) as f:  # 保存截图
-        f.write(last_frame)
-    return inference.inference_screenshot(
-        filename, model_path
-    )  # 将截图交给被调用函数推理

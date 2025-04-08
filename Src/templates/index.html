@@ -293,15 +293,15 @@
       <h2>树叶健康监测</h2>
       <div class="video-container">
         <img id="monitor-video" src="/video_feed" style="width:80%;">
-        <img id="monitor-video" src="/continuously_analyzing_screenshots" alt="辅助摄像头画面" style="width:60%;">
       </div>
       <div class="video-controls">
         <button onclick="zoomIn()">放大</button>
         <button onclick="zoomOut()">缩小</button>
-        <button onclick="startCaptureScreenshot()">开始/停止分析</button>
+        <button onclick="captureScreenshots()">捕获图像</button>
+        <button onclick="captureVideos()">录制视频</button>
         <div class="option-list">
-          <div class="option-item" data-value="best-train1.pt" onclick="handleSelection(this)">best-train1.pt</div>
-          <div class="option-item" data-value="best-train2.pt" onclick="handleSelection(this)">best-train2.pt</div>
+          <div class="option-item" data-value="best-train1_ncnn_model" onclick="handleSelection(this)">best-train1</div>
+          <div class="option-item" data-value="best-train2_ncnn_model" onclick="handleSelection(this)">best-train2</div>
         </div>
         <select id="zoom-level" onchange="changeZoom()">
           <option value="100">100%</option>
@@ -410,7 +410,23 @@
       document.getElementById('monitor-video').style.width = currentZoom + '%';
     }
 
-    let currentModel = 'best-train1.pt';
+    function captureScreenshots() {
+      fetch('/capture_screenshots')
+        .then(response => response.json());
+    }
+    let captureVideos_status = false;
+    function captureVideos() {
+      captureVideos_status = !captureVideos_status;
+      fetch('/capture_videos')
+        .then(response => response.json());
+      if (captureVideos_status) {
+        alert('开始录制视频');
+      }
+      else {
+        alert('录制结束！');
+      };
+    }
+    //let currentModel = 'best-train1';
     function handleSelection(element) {
       // 清除所有选项的选中状态
       document.querySelectorAll('.option-item').forEach(item => {
@@ -421,13 +437,15 @@
       element.style.backgroundColor = '#2d7030';
       // 获取选择值
       currentModel = element.dataset.value;
+      fetch(`/select_model?model=${currentModel}`)
+        .then(response => response.json());
     }
 
     // Capture screenshot
-    function startCaptureScreenshot() {
-      fetch(`/start_capture_screenshot?model=${currentModel}`)
-        .then(response => response.json());
-    }
+    // function selectModel() { // !!!TBD
+    //   fetch(`/select_model?model=${currentModel}`)
+    //     .then(response => response.json());
+    // }
 
     // Temperature alarm
     function checkTemperature() {
