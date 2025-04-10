@@ -6,10 +6,10 @@ haskellPackages.ghcWithPackages (
   haskellPackages:
   with haskellPackages;
   [
-    fourmolu # Formatter
+    # fourmolu # Formatter
     # Libs
     JuicyPixels
-    haskell-language-server
+    # haskell-language-server
   ]
   ++ extraPackages
 )

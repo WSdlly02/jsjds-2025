@@ -26,7 +26,7 @@ app = Flask(__name__)
 # Global variables
 frame_lock = threading.Lock()
 thermal_lock = threading.Lock()
-orign_frame = None
+origin_frame = None
 latest_frame = None
 sys_info = {"cpu": "0%", "memory": "0%", "temp": "N/A", "fps": "0"}
 alarm_playing = False  # 是否警报
@@ -35,8 +35,8 @@ leaf_status = 0  # 树叶是否染病
 capture_video_status = False  # 是否录制视频
 selected_model = (
     "best-train1_ncnn_model"
-    if not os.path.exists("/run/selected-model")
-    else open("/run/selected-model").read()
+    if not os.path.exists("/tmp/selected-model")
+    else open("/tmp/selected-model").read()
 )  # 默认使用的模型
 latest_temp_data = 0
 self_file_path = os.path.dirname(os.path.realpath(__file__))
@@ -54,6 +54,9 @@ config = picam2.create_video_configuration(
 picam2.configure(config)
 picam2.start()
 model = YOLO(model=self_file_path + "/models/" + selected_model, task="detect")
+original_writer = None
+processed_writer = None
+last_frame_time = 0  # 用于帧率控制
 # 修改照片存储路径
 CAPTURED_PATH = os.path.expanduser("~/Pictures/captured")
 ANALYZED_PATH = os.path.expanduser("~/Pictures/analyzed")
@@ -102,23 +105,62 @@ def generate_thermal():
 
 
 def capture_camera_frames():
-    global origin_frame, latest_frame, model, leaf_status
+    global origin_frame, latest_frame, model, leaf_status, capture_video_status
+    global original_writer, processed_writer, last_frame_time
+
     while True:
         with frame_lock:
             origin_frame = picam2.capture_array("main")
-            origin_frame = cv2.cvtColor(src=origin_frame, code=cv2.COLOR_RGB2BGR)
-            # Sharpen
-            # kernel = np.array([[-1, -1, -1], [-1, 9, -1], [-1, -1, -1]])
-            # frame = cv2.filter2D(frame, -1, kernel)
-            # quality = adaptive_quality()
+            origin_frame = cv2.cvtColor(origin_frame, cv2.COLOR_RGB2BGR)
+
+            # ====== 动态控制录制启停 ======
+            if capture_video_status:
+                # 首次进入时初始化视频参数
+                if original_writer is None:
+                    height, width, _ = origin_frame.shape
+                    fps = 10  # 目标帧率
+                    filename = f"{datetime.fromtimestamp(int(time.time()))}.mp4"
+                    fourcc = cv2.VideoWriter_fourcc(*"mp4v")
+                    original_writer = cv2.VideoWriter(
+                        os.path.join(CAPTURED_PATH, filename),
+                        fourcc,
+                        fps,
+                        (width, height),
+                    )
+                    processed_writer = cv2.VideoWriter(
+                        os.path.join(ANALYZED_PATH, filename),
+                        fourcc,
+                        fps,
+                        (width, height),
+                    )
+                    last_frame_time = time.time()
+
+                current_time = time.time()
+                # 计算帧间隔是否满足目标帧率要求
+                if (current_time - last_frame_time) >= (1 / fps):
+                    # 写入原始帧
+                    original_writer.write(origin_frame)
+                    last_frame_time = current_time  # 更新时间戳
+            else:
+                # 状态关闭时释放资源
+                if original_writer is not None:
+                    original_writer.release()
+                    processed_writer.release()
+                    original_writer = None
+                    processed_writer = None
+
+            # YOLO推理逻辑（保持不变）
             results = model(source=origin_frame, stream=True)
             for result in results:
                 if result.boxes and (result.boxes.numpy().cls[0] == 0):
-                    leaf_status = 1  # !!! WILL BE CHANGED ???
+                    leaf_status = 1
                 annotated_frame = result.plot()
-                # _, jpeg = cv2.imencode(
-                #     ".jpg", annotated_frame, [int(cv2.IMWRITE_JPEG_QUALITY), quality]
-                # )
+
+                # ====== 根据状态写入处理后的帧 ======
+                if capture_video_status and processed_writer is not None:
+                    processed_writer.write(annotated_frame)
+
+                # 生成字节流
                 _, jpeg = cv2.imencode(".jpg", annotated_frame)
                 latest_frame = jpeg.tobytes()
 
@@ -180,7 +222,7 @@ def get_temperature_history(limit=100):
 def get_captured_photos():
     photos = []
     for filename in os.listdir(CAPTURED_PATH):
-        if filename.endswith(".jpg"):
+        if filename.endswith(".jpg") or filename.endswith(".mp4"):
             photos.append(
                 {
                     "original": f"captured/{filename}",
@@ -194,7 +236,7 @@ def get_captured_photos():
 @app.route("/capture_screenshots")
 def capture_screenshots():
     global origin_frame, latest_frame
-    if origin_frame and latest_frame:
+    if origin_frame is not None and latest_frame:
         timestamp = time.time()
         filename = f"{datetime.fromtimestamp(int(timestamp))}.jpg"
         captured_file_path = os.path.join(CAPTURED_PATH, filename)
@@ -217,7 +259,7 @@ def capture_videos():
 @app.route("/select_model")
 def select_model():
     selected_model = request.args.get(key="model", default="best-train1_ncnn_model")
-    open("/run/selected-model", "w").write(selected_model)
+    open("/tmp/selected-model", "w").write(selected_model)
     return jsonify({"status": "success"})
 
 
@@ -296,7 +338,6 @@ def restart_server():
 if __name__ == "__main__":
     threading.Thread(target=capture_camera_frames, daemon=True).start()
     threading.Thread(target=get_system_info, daemon=True).start()
-    # threading.Thread(target=analyzing_screenshots, daemon=True).start()
     waitress.serve(app, host="0.0.0.0", port=8080, threads=12)
 
 # !!! TODO: CHANGE THERMAL THRESHOLD
