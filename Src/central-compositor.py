@@ -107,17 +107,18 @@ def generate_thermal():
 def capture_camera_frames():
     global origin_frame, latest_frame, model, leaf_status, capture_video_status
     global original_writer, processed_writer, last_frame_time
-
     while True:
         with frame_lock:
-            origin_frame = picam2.capture_array("main")
-            origin_frame = cv2.cvtColor(origin_frame, cv2.COLOR_RGB2BGR)
-
+            raw_frame = picam2.capture_array("main")
+            raw_frame = cv2.cvtColor(raw_frame, cv2.COLOR_RGB2BGR)
+            origin_frame = raw_frame
+            _, origin_frame_jpeg = cv2.imencode(".jpg", origin_frame)
+            origin_frame = origin_frame_jpeg.tobytes()
             # ====== 动态控制录制启停 ======
             if capture_video_status:
                 # 首次进入时初始化视频参数
                 if original_writer is None:
-                    height, width, _ = origin_frame.shape
+                    height, width, _ = raw_frame.shape
                     fps = 10  # 目标帧率
                     filename = f"{datetime.fromtimestamp(int(time.time()))}.mp4"
                     fourcc = cv2.VideoWriter_fourcc(*"mp4v")
@@ -139,7 +140,7 @@ def capture_camera_frames():
                 # 计算帧间隔是否满足目标帧率要求
                 if (current_time - last_frame_time) >= (1 / fps):
                     # 写入原始帧
-                    original_writer.write(origin_frame)
+                    original_writer.write(raw_frame)
                     last_frame_time = current_time  # 更新时间戳
             else:
                 # 状态关闭时释放资源
@@ -150,10 +151,12 @@ def capture_camera_frames():
                     processed_writer = None
 
             # YOLO推理逻辑（保持不变）
-            results = model(source=origin_frame, stream=True)
+            results = model(source=raw_frame, stream=True)
             for result in results:
                 if result.boxes and (result.boxes.numpy().cls[0] == 0):
                     leaf_status = 1
+                else:
+                    leaf_status = 0
                 annotated_frame = result.plot()
 
                 # ====== 根据状态写入处理后的帧 ======
@@ -161,8 +164,8 @@ def capture_camera_frames():
                     processed_writer.write(annotated_frame)
 
                 # 生成字节流
-                _, jpeg = cv2.imencode(".jpg", annotated_frame)
-                latest_frame = jpeg.tobytes()
+                _, latest_frame_jpeg = cv2.imencode(".jpg", annotated_frame)
+                latest_frame = latest_frame_jpeg.tobytes()
 
 
 def generate_camera():
@@ -207,7 +210,7 @@ def get_temperature_history(limit=100):
         (limit,),
     )
     temp_data = cursor.fetchall()
-    global latest_temp_data, alarm_playing, alarm_status
+    global latest_temp_data, alarm_playing, alarm_status, leaf_status
     latest_temp_data = round(temp_data[0][1], 2)
     conn.close()
     # 警报部分
@@ -222,7 +225,7 @@ def get_temperature_history(limit=100):
 def get_captured_photos():
     photos = []
     for filename in os.listdir(CAPTURED_PATH):
-        if filename.endswith(".jpg") or filename.endswith(".mp4"):
+        if filename.endswith(".jpg"):
             photos.append(
                 {
                     "original": f"captured/{filename}",
