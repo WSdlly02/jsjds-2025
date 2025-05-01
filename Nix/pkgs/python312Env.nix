@@ -44,6 +44,7 @@ python312.withPackages (
     opencv4
     numpy
     psutil
+    pyinstaller
     waitress # Web Server
     ultralytics # YOLO
   ]

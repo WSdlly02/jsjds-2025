@@ -7,6 +7,8 @@
 *.o
 *.hi
 .vscode/
+build/
+dist/
 result/
 target/
 /Python/yolo/*

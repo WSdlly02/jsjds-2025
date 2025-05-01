@@ -43,7 +43,7 @@ self_file_path = os.path.dirname(os.path.realpath(__file__))
 # Initialize camera
 picam2 = Picamera2()
 config = picam2.create_video_configuration(
-    main={"size": (1296, 972)},  # Native resolution
+    main={"size": (2592, 1944)},  # Native resolution
     lores={"size": (1296, 972)},  # Preview stream
     display="main",
     encode="main",
