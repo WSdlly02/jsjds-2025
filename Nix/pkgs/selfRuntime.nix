@@ -1,15 +1,17 @@
 {
-  fetchFromGitHub,
-  inputs,
+  haskellEnv,
+  python312Env,
   stdenvNoCC,
-  system,
 }:
 
 stdenvNoCC.mkDerivation {
   pname = "selfRuntime";
   version = "1.0.0";
   src = ../../Src;
-  nativeBuildInputs = with inputs.self.legacyPackages."${system}" [ haskellEnv python312Env ];
+  nativeBuildInputs = [
+    haskellEnv
+    python312Env
+  ];
   buildPhase = ''
     ghc -O2 -Wall -threaded -rtsopts -with-rtsopts=-N -optlo-O3 -funfolding-use-threshold=32 thermal-data-processor.hs -o thermal-data-processor
     pyinstaller --strip --optimize 2 thermal-data-reader.py

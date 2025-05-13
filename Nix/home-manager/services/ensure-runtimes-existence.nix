@@ -1,14 +1,13 @@
 {
-  inputs,
   pkgs,
   ...
 }:
 {
   systemd.user.services.ensure-runtimes-existence = {
     Unit.Description = "Checking beingness of the runtimes";
-    Service = with inputs.self.legacyPackages."aarch64-linux"; {
+    Service = with pkgs; {
       Type = "oneshot";
-      ExecStart = "${pkgs.writeScript "ensure-runtimes-existence.py" ''
+      ExecStart = "${writeScript "ensure-runtimes-existence.py" ''
         #!${python312Env}/bin/python3.12
         import os
         import shutil

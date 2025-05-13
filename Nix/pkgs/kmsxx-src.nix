@@ -4,7 +4,7 @@
   stdenvNoCC,
 }:
 
-stdenvNoCC.mkDerivation rec {
+stdenvNoCC.mkDerivation {
   pname = "kmsxx-src";
   version = "2025-2-12";
 

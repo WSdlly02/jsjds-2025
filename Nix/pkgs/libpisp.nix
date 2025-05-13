@@ -1,7 +1,6 @@
 {
   cmake,
   fetchFromGitHub,
-  lib,
   meson,
   ninja,
   nlohmann_json,

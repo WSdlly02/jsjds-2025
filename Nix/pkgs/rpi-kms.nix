@@ -10,12 +10,11 @@
   pkg-config,
   python312Packages,
   stdenv,
-  system,
 }:
 stdenv.mkDerivation rec {
   pname = "rpi-kms";
   version = "0.1a1";
-  src = fetchPypi rec {
+  src = fetchPypi {
     pname = "rpi_kms";
     inherit version;
     hash = "sha256-+TKLjTgCznrGO9KFsBX0cWD6G2SxZDufeTUz5EONB/g=";
@@ -23,7 +22,7 @@ stdenv.mkDerivation rec {
   patchPhase = ''
     patchShebangs clone-kmsxx.sh
     sed -i 's|\bgit\b|git -c safe.directory="${
-      inputs.self.legacyPackages."${system}".kmsxx-src
+      inputs.self.legacyPackages."${stdenv.hostPlatform.system}".kmsxx-src
     }/.git"|g' clone-kmsxx.sh
     cat >>meson_options.txt<< EOF
     option('libutils', type : 'boolean', value : true,
@@ -37,7 +36,7 @@ stdenv.mkDerivation rec {
     EOF
   '';
   mesonFlags = [
-    "-Drepository=${inputs.self.legacyPackages."${system}".kmsxx-src}"
+    "-Drepository=${inputs.self.legacyPackages."${stdenv.hostPlatform.system}".kmsxx-src}"
     "-Drevision=master"
   ];
   nativeBuildInputs = [

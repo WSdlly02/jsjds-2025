@@ -6,7 +6,7 @@ python312Packages.buildPythonPackage rec {
   pname = "v4l2-python3";
   version = "0.3.5";
   # format = "wheel";
-  src = fetchPypi rec {
+  src = fetchPypi {
     pname = "v4l2-python3";
     inherit version;
     # dist = python;

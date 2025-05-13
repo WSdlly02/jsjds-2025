@@ -2,7 +2,7 @@
   autoPatchelfHook,
   python312Packages,
   fetchPypi,
-  system,
+  stdenv,
 }:
 python312Packages.buildPythonPackage rec {
   pname = "ncnn";
@@ -29,6 +29,6 @@ python312Packages.buildPythonPackage rec {
         hash = "sha256-ybFbzbA5PRU5AvjjXB5Rr0d9qpmX060xwl14UtKez4M=";
       };
     }
-    .${system};
+    .${stdenv.hostPlatform.system};
   nativeBuildInputs = [ autoPatchelfHook ];
 }

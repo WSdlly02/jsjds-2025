@@ -5,7 +5,6 @@
   gst_all_1,
   gtest,
   inputs,
-  lib,
   libdrm,
   libevent,
   libyaml,
@@ -18,7 +17,6 @@
   python312,
   python312Packages,
   stdenv,
-  system,
   systemd, # for libudev
 }:
 
@@ -26,7 +24,7 @@ stdenv.mkDerivation rec {
   pname = "libcamera";
   version = "0.3.1+rpt20240906";
 
-  src = fetchFromGitHub rec {
+  src = fetchFromGitHub {
     owner = "raspberrypi";
     repo = "libcamera";
     rev = "v${version}";
@@ -84,7 +82,7 @@ stdenv.mkDerivation rec {
     libyaml
 
     gtest
-    inputs.self.legacyPackages."${system}".libpisp
+    inputs.self.legacyPackages."${stdenv.hostPlatform.system}".libpisp
   ];
 
   nativeBuildInputs = [
@@ -123,7 +121,7 @@ stdenv.mkDerivation rec {
   # Silence fontconfig warnings about missing config
   FONTCONFIG_FILE = makeFontsConf { fontDirectories = [ ]; };
 
-  meta = with lib; {
+  meta = {
     description = "An open source camera stack and framework for Linux, Android, and ChromeOS";
     homepage = "https://libcamera.org";
   };

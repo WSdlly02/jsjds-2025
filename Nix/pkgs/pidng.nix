@@ -6,7 +6,7 @@ python312Packages.buildPythonPackage rec {
   pname = "pidng";
   version = "4.0.9";
   # format = "wheel";
-  src = fetchPypi rec {
+  src = fetchPypi {
     pname = "pidng";
     inherit version;
     # dist = python;

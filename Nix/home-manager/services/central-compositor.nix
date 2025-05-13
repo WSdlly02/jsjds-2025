@@ -1,5 +1,4 @@
 {
-  inputs,
   pkgs,
   ...
 }:
@@ -10,10 +9,10 @@
       After = [ "ensure-runtimes-existence.service" ];
       Requires = [ "ensure-runtimes-existence.service" ];
     };
-    Service = with inputs.self.legacyPackages."aarch64-linux"; {
-      Environment = "PATH=${pkgs.systemd}/bin";
-      ExecStartPre = "${pkgs.coreutils}/bin/sleep 3";
-      ExecStart = "${pkgs.runtimeShell} -c \"${python312Env}/bin/python3.12 ${selfRuntime}/thermal-data-reader.py | ${selfRuntime}/thermal-data-processor | ${python312Env}/bin/python3.12 ${selfRuntime}/central-compositor.py\"";
+    Service = with pkgs; {
+      Environment = "PATH=${systemd}/bin";
+      ExecStartPre = "${coreutils}/bin/sleep 3";
+      ExecStart = "${runtimeShell} -c \"${python312Env}/bin/python3.12 ${selfRuntime}/thermal-data-reader.py | ${selfRuntime}/thermal-data-processor | ${python312Env}/bin/python3.12 ${selfRuntime}/central-compositor.py\"";
     };
     Install = {
       WantedBy = [ "default.target" ];

@@ -6,7 +6,7 @@ python312Packages.buildPythonPackage rec {
   pname = "picamera2";
   version = "0.3.25";
   # format = "wheel";
-  src = fetchPypi rec {
+  src = fetchPypi {
     pname = "picamera2";
     inherit version;
     # dist = python;

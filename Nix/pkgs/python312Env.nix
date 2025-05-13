@@ -2,12 +2,12 @@
   extraPackages ? [ ],
   inputs,
   python312,
-  system,
+  stdenv,
 }:
 python312.withPackages (
   python312Packages: # just formal arguement
   with python312Packages;
-  with inputs.self.legacyPackages."${system}";
+  with inputs.self.legacyPackages."${stdenv.hostPlatform.system}";
   [
     # Drivers from self
     mlx90460-driver.Adafruit-Blinka
